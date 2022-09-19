@@ -1,9 +1,20 @@
-use crate::types::state::State;
-use std::sync::Arc;
 use crate::types::consumer_producer_orders::ConsumerProducerOrders;
+use crate::types::ingridients::Ingridients;
+use crate::types::order_format::OrderFormat;
+use crate::types::state::State;
+use std::sync::{Arc, Condvar, Mutex};
+
+fn dispenser(order: OrderFormat, ingridients_pair: &Arc<(Mutex<Ingridients>, Condvar)>) {
+    let (lock, cvar) = &**ingridients_pair;
+    println!("{}", order);
+    let mut ingridients = lock.lock().unwrap();
+    println!("{}", ingridients);
+    ingridients.e -= 1;
+}
 
 pub fn consumer(
-    order_resources: Arc<ConsumerProducerOrders>
+    order_resources: Arc<ConsumerProducerOrders>,
+    ingridients_pair: Arc<(Mutex<Ingridients>, Condvar)>,
 ) {
     let mut cond: State;
     {
@@ -26,7 +37,7 @@ pub fn consumer(
                 }
                 continue;
             }
-            println!("{}", buffer.remove(0));
+            dispenser(buffer.remove(0), &ingridients_pair);
             order_resources.not_full.release();
         }
         {

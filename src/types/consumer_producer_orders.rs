@@ -1,7 +1,7 @@
-use std_semaphore::Semaphore;
-use std::sync::RwLock;
-use crate::types::state::State;
 use crate::types::order_format::OrderFormat;
+use crate::types::state::State;
+use std::sync::RwLock;
+use std_semaphore::Semaphore;
 
 pub struct ConsumerProducerOrders {
     pub not_empty: Semaphore,

@@ -1,4 +1,4 @@
-use std::fmt::{self, Formatter, Display};
+use std::fmt::{self, Display, Formatter};
 
 pub struct OrderFormat {
     pub coffee: i32,
@@ -8,7 +8,10 @@ pub struct OrderFormat {
 
 impl Display for OrderFormat {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "coffee:{}, hot_water:{}, foam:{}",
-               self.coffee, self.hot_water, self.foam)
+        write!(
+            f,
+            "coffee:{}, hot_water:{}, foam:{}",
+            self.coffee, self.hot_water, self.foam
+        )
     }
 }

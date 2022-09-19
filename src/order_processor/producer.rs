@@ -1,11 +1,9 @@
-use crate::types::state::State;
-use std::sync::Arc;
 use crate::types::consumer_producer_orders::ConsumerProducerOrders;
 use crate::types::order_format::OrderFormat;
+use crate::types::state::State;
+use std::sync::Arc;
 
-pub fn producer(
-    order_resources: Arc<ConsumerProducerOrders>
-) {
+pub fn producer(order_resources: Arc<ConsumerProducerOrders>) {
     let mut i = 0;
     while i < 50 {
         order_resources.not_full.acquire();
