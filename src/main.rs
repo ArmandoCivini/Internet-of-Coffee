@@ -4,6 +4,7 @@ use std::thread::JoinHandle;
 use std_semaphore::Semaphore;
 mod types;
 use types::state::State;
+use types::consumer_producer_orders::ConsumerProducerOrders;
 mod coffee_maker;
 use coffee_maker::consumer;
 mod order_processor;
@@ -12,33 +13,28 @@ use order_processor::producer;
 fn main() {
     let dispensers_number = 10;
     let orders_buffer_size = 20;
-    let stop = State::Reading;
-    let orders_not_empty = Arc::new(Semaphore::new(0));
-    let orders_not_full = Arc::new(Semaphore::new(orders_buffer_size));
-    let orders_buffer: Vec<i32> = Vec::new();
-    let orders_buffer_lock = Arc::new(RwLock::new(orders_buffer));
-    let stop_lock = Arc::new(RwLock::new(stop));
+
+    let consumer_producer_orders = ConsumerProducerOrders {
+        not_empty: Semaphore::new(0),
+        not_full: Semaphore::new(orders_buffer_size),
+        orders: RwLock::new(Vec::new()),
+        stop: RwLock::new(State::Reading),
+    };
+
+    let consumer_producer_orders_ref = Arc::new(consumer_producer_orders);
+
     let dispensers_threads: Vec<JoinHandle<()>> = (0..dispensers_number)
         .map(|_| {
-            let lock_clone = orders_buffer_lock.clone();
-            let orders_not_empty_clone = orders_not_empty.clone();
-            let orders_not_full_clone = orders_not_full.clone();
-            let stop_lock_clone = stop_lock.clone();
+            let consumer_producer_orders_clone = consumer_producer_orders_ref.clone();
             thread::spawn(move || {
                 consumer::consumer(
-                    lock_clone,
-                    orders_not_empty_clone,
-                    orders_not_full_clone,
-                    stop_lock_clone,
+                    consumer_producer_orders_clone
                 )
             })
         })
         .collect();
     producer::producer(
-        orders_buffer_lock,
-        orders_not_empty,
-        orders_not_full,
-        stop_lock,
+        consumer_producer_orders_ref
     );
     dispensers_threads
         .into_iter()
