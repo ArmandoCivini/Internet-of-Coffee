@@ -1,6 +1,7 @@
 use crate::types::state::State;
 use std::sync::Arc;
 use crate::types::consumer_producer_orders::ConsumerProducerOrders;
+use crate::types::order_format::OrderFormat;
 
 pub fn producer(
     order_resources: Arc<ConsumerProducerOrders>
@@ -9,8 +10,13 @@ pub fn producer(
     while i < 50 {
         order_resources.not_full.acquire();
         {
+            let resource = OrderFormat {
+                coffee: 0,
+                hot_water: 2,
+                foam: 6,
+            };
             let mut buffer = order_resources.orders.write().unwrap();
-            buffer.push(i);
+            buffer.push(resource);
         }
         order_resources.not_empty.release();
         i += 1;
