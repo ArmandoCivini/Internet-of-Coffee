@@ -9,7 +9,7 @@ pub fn producer(order_resources: Arc<ConsumerProducerOrders>) {
         order_resources.not_full.acquire();
         {
             let resource = OrderFormat {
-                coffee: 0,
+                coffee: 1,
                 hot_water: 2,
                 foam: 6,
             };

@@ -7,9 +7,38 @@ use std::sync::{Arc, Condvar, Mutex};
 fn dispenser(order: OrderFormat, ingridients_pair: &Arc<(Mutex<Ingridients>, Condvar)>) {
     let (lock, cvar) = &**ingridients_pair;
     println!("{}", order);
-    let mut ingridients = lock.lock().unwrap();
-    println!("{}", ingridients);
-    ingridients.e -= 1;
+    let mut coffee_missing = order.coffee;
+    let mut milk_missing = order.foam;
+    while coffee_missing > 0 || milk_missing > 0 {
+        let mut ingridient_guard = cvar
+            .wait_while(lock.lock().unwrap(), |ingridients| {
+                println!("[waiter] checking condition {}", *ingridients);
+                if coffee_missing > 0 && ingridients.c > 0 {
+                    return false;
+                }
+                if milk_missing > 0 && ingridients.e > 0 {
+                    return false;
+                }
+                true
+            })
+            .unwrap();
+        if ingridient_guard.c > coffee_missing {
+            ingridient_guard.c -= coffee_missing;
+            coffee_missing = 0;
+        } else {
+            coffee_missing -= ingridient_guard.c;
+            ingridient_guard.c = 0;
+        }
+        if ingridient_guard.e > milk_missing {
+            ingridient_guard.e -= milk_missing;
+            milk_missing = 0;
+        } else {
+            milk_missing -= ingridient_guard.e;
+            ingridient_guard.e = 0;
+        }
+        cvar.notify_all();
+    }
+    println!("finished fetching ingridients");
 }
 
 pub fn consumer(

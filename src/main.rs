@@ -11,6 +11,53 @@ use coffee_maker::consumer;
 mod order_processor;
 use order_processor::producer;
 
+fn reload(ingridients_mutex: &Mutex<Ingridients>, reload_coffee: bool) {
+    //TODO: add sleep
+    let mut ingridients = ingridients_mutex.lock().unwrap();
+    if reload_coffee {
+        ingridients.c = 100;
+        ingridients.g -= 10;
+    } else {
+        ingridients.e = 100;
+        ingridients.l -= 10;
+    }
+}
+
+fn ingridient_reloader(
+    ingridients_pair: Arc<(Mutex<Ingridients>, Condvar)>,
+    end_of_orders: Arc<RwLock<bool>>,
+) {
+    let (lock, cvar) = &*ingridients_pair;
+    let mut reload_coffee: bool;
+    let mut cond: bool;
+    {
+        let stop_read = end_of_orders.read().unwrap();
+        cond = *stop_read;
+    }
+    while !cond {
+        {
+            let ingridient_guard = cvar
+                .wait_while(lock.lock().unwrap(), |ingridients| {
+                    ingridients.c > 0 && ingridients.e > 0
+                })
+                .unwrap();
+            if ingridient_guard.c == 0 {
+                reload_coffee = true;
+            } else {
+                reload_coffee = false;
+            }
+            cvar.notify_all();
+        }
+        reload(lock, reload_coffee);
+        cvar.notify_all();
+        {
+            let stop_read = end_of_orders.read().unwrap();
+            cond = *stop_read;
+        }
+    }
+    println!("END");
+}
+
 fn main() {
     let dispensers_number = 10;
     let orders_buffer_size = 20;
@@ -40,9 +87,29 @@ fn main() {
             })
         })
         .collect();
+
+    let end_of_orders = Arc::new(RwLock::new(false));
+    let end_of_orders_clone = end_of_orders.clone();
+    let ingridients_pair_clone = ingridients_pair.clone();
+    let realoder_thread = thread::spawn(move || {
+        ingridient_reloader(ingridients_pair_clone, end_of_orders_clone);
+    });
+
     producer::producer(consumer_producer_orders_ref);
+
     dispensers_threads
         .into_iter()
         .flat_map(|x| x.join())
-        .for_each(drop)
+        .for_each(drop);
+    {
+        let mut stop_reloader = end_of_orders.write().unwrap();
+        *stop_reloader = true;
+    }
+    let (lock, cvar) = &*ingridients_pair;
+    {
+        let mut ingridientss = lock.lock().unwrap();
+        ingridientss.c = 0;
+    }
+    cvar.notify_all();
+    realoder_thread.join().unwrap();
 }
