@@ -32,9 +32,35 @@ fn reload(ingridients_mutex: &Mutex<Ingridients>, reload_coffee: bool) {
     }
 }
 
+fn update_stats(stats_lock: &Arc<RwLock<Stats>>, reload_coffee: bool) {
+    let mut stats = stats_lock.write().unwrap();
+    if reload_coffee {
+        stats.g_consumed += 10;
+    } else {
+        stats.l_consumed += 10;
+    }
+}
+
+fn wait_missing_ingridients (lock: &Mutex<Ingridients>, cvar: &Condvar) -> bool {
+    let ingridient_guard = cvar
+        .wait_while(lock.lock().unwrap(), |ingridients| {
+            ingridients.c > 0 && ingridients.e > 0
+        })
+        .unwrap();
+    if ingridient_guard.c == 0 {
+        println!("Reloading coffee");
+        return true
+    } else {
+        println!("Reloading foam");
+        return false
+    }
+    cvar.notify_all();
+}
+
 fn ingridient_reloader(
     ingridients_pair: Arc<(Mutex<Ingridients>, Condvar)>,
     end_of_orders: Arc<RwLock<bool>>,
+    stats: Arc<RwLock<Stats>>
 ) {
     let (lock, cvar) = &*ingridients_pair;
     let mut reload_coffee: bool;
@@ -43,7 +69,26 @@ fn ingridient_reloader(
         let stop_read = end_of_orders.read().unwrap();
         cond = *stop_read;
     }
+    {
+        let ingridient_guard = cvar
+            .wait_while(lock.lock().unwrap(), |ingridients| {
+                ingridients.c > 0 && ingridients.e > 0
+            })
+            .unwrap();
+        if ingridient_guard.c == 0 {
+            println!("Reloading coffee");
+            reload_coffee = true;
+        } else {
+            println!("Reloading foam");
+            reload_coffee = false;
+        }
+        cvar.notify_all();
+    }
     while !cond {
+        reload(lock, reload_coffee);
+        println!("Finished reloading");
+        cvar.notify_all();
+        update_stats(&stats, reload_coffee);
         {
             let ingridient_guard = cvar
                 .wait_while(lock.lock().unwrap(), |ingridients| {
@@ -59,9 +104,6 @@ fn ingridient_reloader(
             }
             cvar.notify_all();
         }
-        reload(lock, reload_coffee);
-        println!("Finished reloading");
-        cvar.notify_all();
         {
             let stop_read = end_of_orders.read().unwrap();
             cond = *stop_read;
@@ -95,6 +137,7 @@ fn main() {
         c_consumed: 0,
         l_consumed: 0,
         e_consumed: 0,
+        water_consumed: 0,
         coffee_consumed: 0,
     };
     let stats_ref = Arc::new(RwLock::new(stats));
@@ -103,9 +146,13 @@ fn main() {
         .map(|_| {
             let consumer_producer_orders_clone = consumer_producer_orders_ref.clone();
             let ingridients_pair_clone = ingridients_pair.clone();
-            let stats_clone = stats_ref.clone(); //TODO
+            let stats_clone = stats_ref.clone();
             thread::spawn(move || {
-                consumer::consumer(consumer_producer_orders_clone, ingridients_pair_clone)
+                consumer::consumer(
+                    consumer_producer_orders_clone,
+                    ingridients_pair_clone,
+                    stats_clone
+                )
             })
         })
         .collect();
@@ -113,8 +160,9 @@ fn main() {
     let end_of_orders = Arc::new(RwLock::new(false));
     let end_of_orders_clone = end_of_orders.clone();
     let ingridients_pair_clone = ingridients_pair.clone();
+    let stats_clone = stats_ref.clone();
     let realoder_thread = thread::spawn(move || {
-        ingridient_reloader(ingridients_pair_clone, end_of_orders_clone);
+        ingridient_reloader(ingridients_pair_clone, end_of_orders_clone, stats_clone);
     });
 
     producer::producer(consumer_producer_orders_ref);
@@ -135,4 +183,6 @@ fn main() {
     }
     cvar.notify_all();
     realoder_thread.join().unwrap();
+
+    println!("{}", stats_ref.read().unwrap());
 }

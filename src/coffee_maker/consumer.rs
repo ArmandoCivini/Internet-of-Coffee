@@ -2,7 +2,8 @@ use crate::types::consumer_producer_orders::ConsumerProducerOrders;
 use crate::types::ingridients::Ingridients;
 use crate::types::order_format::OrderFormat;
 use crate::types::state::State;
-use std::sync::{Arc, Condvar, Mutex};
+use  crate::types::stats::Stats;
+use std::sync::{Arc, Condvar, Mutex, RwLock};
 use std::{thread, time::Duration};
 
 fn ingridient_sleep(ingridient: i32) {
@@ -44,7 +45,7 @@ fn grab_ingridients(
     }
     cvar.notify_all();
 }
-fn dispenser(order: OrderFormat, ingridients_pair: &Arc<(Mutex<Ingridients>, Condvar)>) {
+fn dispenser(order: &OrderFormat, ingridients_pair: &Arc<(Mutex<Ingridients>, Condvar)>) {
     let (lock, cvar) = &**ingridients_pair;
     println!("preparing order: {{{}}}", order);
     let mut coffee_missing = order.coffee;
@@ -60,9 +61,18 @@ fn dispenser(order: OrderFormat, ingridients_pair: &Arc<(Mutex<Ingridients>, Con
     ingridient_sleep(order.hot_water);
 }
 
+fn register_order(order: &OrderFormat, stats_lock: &Arc<RwLock<Stats>>){
+    let mut stats = stats_lock.write().unwrap();
+    stats.c_consumed += order.coffee;
+    stats.e_consumed += order.foam;
+    stats.water_consumed += order.hot_water;
+    stats.coffee_consumed += 1;
+}
+
 pub fn consumer(
     order_resources: Arc<ConsumerProducerOrders>,
     ingridients_pair: Arc<(Mutex<Ingridients>, Condvar)>,
+    stats: Arc<RwLock<Stats>>
 ) {
     let mut cond: State;
     let mut order: OrderFormat;
@@ -89,7 +99,8 @@ pub fn consumer(
             order = buffer.remove(0);
             order_resources.not_full.release();
         }
-        dispenser(order, &ingridients_pair);
+        dispenser(&order, &ingridients_pair);
+        register_order(&order, &stats);
         {
             let stop_read = order_resources.stop.read().unwrap();
             cond = *stop_read;
