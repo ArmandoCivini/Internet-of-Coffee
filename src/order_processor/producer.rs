@@ -9,9 +9,9 @@ pub fn producer(order_resources: Arc<ConsumerProducerOrders>) {
         order_resources.not_full.acquire();
         {
             let resource = OrderFormat {
-                coffee: 1,
+                coffee: 3,
                 hot_water: 2,
-                foam: 6,
+                foam: 4,
             };
             let mut buffer = order_resources.orders.write().unwrap();
             buffer.push(resource);
@@ -19,11 +19,11 @@ pub fn producer(order_resources: Arc<ConsumerProducerOrders>) {
         order_resources.not_empty.release();
         i += 1;
     }
-    //orders_not_full.acquire();
     let mut stop_write = order_resources.stop.write().unwrap();
     *stop_write = State::FinishedReading;
     println!("finished producer");
     for _i in 0..100 {
+        // unlocks waiting threads
         order_resources.not_empty.release();
     }
 }

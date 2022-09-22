@@ -1,25 +1,34 @@
 use std::sync::{Arc, Condvar, Mutex, RwLock};
-use std::thread;
 use std::thread::JoinHandle;
+use std::{thread, time::Duration};
 use std_semaphore::Semaphore;
 mod types;
 use types::consumer_producer_orders::ConsumerProducerOrders;
 use types::ingridients::Ingridients;
 use types::state::State;
+use types::stats::Stats;
 mod coffee_maker;
 use coffee_maker::consumer;
 mod order_processor;
 use order_processor::producer;
 
 fn reload(ingridients_mutex: &Mutex<Ingridients>, reload_coffee: bool) {
-    //TODO: add sleep
+    thread::sleep(Duration::from_millis(300));
     let mut ingridients = ingridients_mutex.lock().unwrap();
     if reload_coffee {
+        //10 units of raw material can be converted to 100 units of product
         ingridients.c = 100;
         ingridients.g -= 10;
     } else {
         ingridients.e = 100;
         ingridients.l -= 10;
+    }
+    if ingridients.g == 0 {
+        //if raw runs out, it is replentish with no cost
+        ingridients.g = 100;
+    }
+    if ingridients.l == 0 {
+        ingridients.l = 100;
     }
 }
 
@@ -42,20 +51,23 @@ fn ingridient_reloader(
                 })
                 .unwrap();
             if ingridient_guard.c == 0 {
+                println!("Reloading coffee");
                 reload_coffee = true;
             } else {
+                println!("Reloading foam");
                 reload_coffee = false;
             }
             cvar.notify_all();
         }
         reload(lock, reload_coffee);
+        println!("Finished reloading");
         cvar.notify_all();
         {
             let stop_read = end_of_orders.read().unwrap();
             cond = *stop_read;
         }
     }
-    println!("END");
+    println!("Shuting down reloader");
 }
 
 fn main() {
@@ -78,10 +90,20 @@ fn main() {
     };
     let ingridients_pair = Arc::new((Mutex::new(ingridients), Condvar::new()));
 
+    let stats = Stats {
+        g_consumed: 0,
+        c_consumed: 0,
+        l_consumed: 0,
+        e_consumed: 0,
+        coffee_consumed: 0,
+    };
+    let stats_ref = Arc::new(RwLock::new(stats));
+
     let dispensers_threads: Vec<JoinHandle<()>> = (0..dispensers_number)
         .map(|_| {
             let consumer_producer_orders_clone = consumer_producer_orders_ref.clone();
             let ingridients_pair_clone = ingridients_pair.clone();
+            let stats_clone = stats_ref.clone(); //TODO
             thread::spawn(move || {
                 consumer::consumer(consumer_producer_orders_clone, ingridients_pair_clone)
             })
@@ -107,6 +129,7 @@ fn main() {
     }
     let (lock, cvar) = &*ingridients_pair;
     {
+        //unlocks the condvar on realoder
         let mut ingridientss = lock.lock().unwrap();
         ingridientss.c = 0;
     }
