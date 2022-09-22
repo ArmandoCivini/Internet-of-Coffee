@@ -11,7 +11,7 @@ pub fn producer(order_resources: Arc<ConsumerProducerOrders>) {
             let resource = OrderFormat {
                 coffee: 3,
                 hot_water: 2,
-                foam: 4,
+                foam: 3,
             };
             let mut buffer = order_resources.orders.write().unwrap();
             buffer.push(resource);

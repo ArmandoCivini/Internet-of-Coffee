@@ -54,7 +54,6 @@ fn wait_missing_ingridients (lock: &Mutex<Ingridients>, cvar: &Condvar) -> bool 
         println!("Reloading foam");
         return false
     }
-    cvar.notify_all();
 }
 
 fn ingridient_reloader(
@@ -69,41 +68,15 @@ fn ingridient_reloader(
         let stop_read = end_of_orders.read().unwrap();
         cond = *stop_read;
     }
-    {
-        let ingridient_guard = cvar
-            .wait_while(lock.lock().unwrap(), |ingridients| {
-                ingridients.c > 0 && ingridients.e > 0
-            })
-            .unwrap();
-        if ingridient_guard.c == 0 {
-            println!("Reloading coffee");
-            reload_coffee = true;
-        } else {
-            println!("Reloading foam");
-            reload_coffee = false;
-        }
-        cvar.notify_all();
-    }
+    reload_coffee = wait_missing_ingridients(&lock, &cvar);
+    cvar.notify_all();
     while !cond {
         reload(lock, reload_coffee);
         println!("Finished reloading");
         cvar.notify_all();
         update_stats(&stats, reload_coffee);
-        {
-            let ingridient_guard = cvar
-                .wait_while(lock.lock().unwrap(), |ingridients| {
-                    ingridients.c > 0 && ingridients.e > 0
-                })
-                .unwrap();
-            if ingridient_guard.c == 0 {
-                println!("Reloading coffee");
-                reload_coffee = true;
-            } else {
-                println!("Reloading foam");
-                reload_coffee = false;
-            }
-            cvar.notify_all();
-        }
+        reload_coffee = wait_missing_ingridients(&lock, &cvar);
+        cvar.notify_all();
         {
             let stop_read = end_of_orders.read().unwrap();
             cond = *stop_read;
