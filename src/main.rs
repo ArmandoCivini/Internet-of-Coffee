@@ -1,5 +1,5 @@
 use std::sync::{Arc, Condvar, Mutex, RwLock};
-use std::{thread, time::Duration};
+use std::{thread};
 use std::thread::JoinHandle;
 use std_semaphore::Semaphore;
 
@@ -18,23 +18,8 @@ use order_processor::producer;
 mod ingridient_reloader;
 use crate::ingridient_reloader::ingridient_reloader::ingridient_reloader;
 
-fn display_stats(stop: Arc<RwLock<bool>>, stats: Arc<RwLock<Stats>>) {
-    let mut cond: bool;
-    {
-        let stop_read = stop.read().unwrap();
-        cond = *stop_read;
-    }
-    while !cond {
-        thread::sleep(Duration::from_millis(3000));
-        {
-        println!("{}", stats.read().unwrap());
-        }
-        {
-            let stop_read = stop.read().unwrap();
-            cond = *stop_read;
-        }
-    }
-}
+mod display_stats;
+use crate::display_stats::display_stats::display_stats;
 
 fn main() {
     let dispensers_number = 10;
