@@ -18,7 +18,7 @@ fn grab_ingridients(
     {
         let mut ingridient_guard = cvar
             .wait_while(lock.lock().unwrap(), |ingridients| {
-                println!("[waiter] checking condition {}", *ingridients);
+                println!("{}", *ingridients);
                 if *coffee_missing > 0 && ingridients.c > 0 {
                     return false;
                 }
@@ -47,15 +47,15 @@ fn grab_ingridients(
 }
 fn dispenser(order: &OrderFormat, ingridients_pair: &Arc<(Mutex<Ingridients>, Condvar)>) {
     let (lock, cvar) = &**ingridients_pair;
-    println!("preparing order: {{{}}}", order);
+    println!("preparando orden: {{{}}}", order);
     let mut coffee_missing = order.coffee;
     let mut milk_missing = order.foam;
     while coffee_missing > 0 || milk_missing > 0 {
         grab_ingridients(lock, cvar, &mut coffee_missing, &mut milk_missing);
     }
-    println!("finished fetching ingridients");
+    println!("se termino de recojer ingredientes");
 
-    //time for preparation
+    //tiempo de preparacion
     ingridient_sleep(order.coffee);
     ingridient_sleep(order.foam);
     ingridient_sleep(order.hot_water);
@@ -86,7 +86,7 @@ pub fn consumer(
             let mut buffer = order_resources.orders.write().unwrap();
             if buffer.len() == 0 {
                 if matches!(cond, State::FinishedReading) {
-                    println!("alerting");
+                    println!("alertando");
                     let mut stop_write = order_resources.stop.write().unwrap();
                     *stop_write = State::FinishedProcessing;
                 }
@@ -106,5 +106,5 @@ pub fn consumer(
             cond = *stop_read;
         }
     }
-    println!("finished consumer");
+    println!("fin de consumidor");
 }

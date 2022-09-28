@@ -10,7 +10,7 @@ impl Display for OrderFormat {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(
             f,
-            "coffee:{}, hot_water:{}, foam:{}",
+            "cafe:{}, agua:{}, espuma:{}",
             self.coffee, self.hot_water, self.foam
         )
     }

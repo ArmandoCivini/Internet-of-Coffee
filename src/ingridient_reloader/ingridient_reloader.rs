@@ -7,7 +7,7 @@ fn reload(ingridients_mutex: &Mutex<Ingridients>, reload_coffee: bool) {
     thread::sleep(Duration::from_millis(300));
     let mut ingridients = ingridients_mutex.lock().unwrap();
     if reload_coffee {
-        //10 units of raw material can be converted to 100 units of product
+        //10 unidades de crudo son 100 unidades de producto
         ingridients.c = 100;
         ingridients.g -= 10;
     } else {
@@ -15,13 +15,17 @@ fn reload(ingridients_mutex: &Mutex<Ingridients>, reload_coffee: bool) {
         ingridients.l -= 10;
     }
     if ingridients.g == 0 {
-        //if raw runs out, it is replentish with no cost
+        //si se acaba crudo se recarga sin espera
         ingridients.g = 100;
+    } else if ingridients.g < 25 {
+        println!("capacidad de ganos de cafe por debajo del 25%");
     }
     if ingridients.l == 0 {
         ingridients.l = 100;
+    } else if ingridients.l < 25 {
+        println!("capacidad de leche fria por debajo del 25%");
     }
-    println!("finished reloading");
+    println!("fin de la recarga");
 }
 
 fn update_stats(stats_lock: &Arc<RwLock<Stats>>, reload_coffee: bool) {
@@ -40,10 +44,10 @@ fn wait_missing_ingridients(lock: &Mutex<Ingridients>, cvar: &Condvar) -> bool {
         })
         .unwrap();
     if ingridient_guard.c == 0 {
-        println!("Reloading coffee");
+        println!("Recargando cafe");
         return true;
     } else {
-        println!("Reloading foam");
+        println!("Recargando leche");
         return false;
     }
 }
@@ -64,7 +68,7 @@ pub fn ingridient_reloader(
     cvar.notify_all();
     while !cond {
         reload(lock, reload_coffee);
-        println!("Finished reloading");
+        println!("Fin de recarga");
         cvar.notify_all();
         update_stats(&stats, reload_coffee);
         reload_coffee = wait_missing_ingridients(&lock, &cvar);
@@ -74,5 +78,5 @@ pub fn ingridient_reloader(
             cond = *stop_read;
         }
     }
-    println!("Shuting down reloader");
+    println!("Apagando recargador");
 }

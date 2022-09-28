@@ -107,12 +107,11 @@ fn main() {
     }
     let (lock, cvar) = &*ingridients_pair;
     {
-        //unlocks the condvar on realoder
+        //desbloquea la condvar del reloader
         let mut ingridientss = lock.lock().unwrap();
         ingridientss.c = 0;
     }
     cvar.notify_all();
     realoder_thread.join().unwrap();
     stats_thread.join().unwrap();
-    //println!("{}", stats_ref.read().unwrap());
 }

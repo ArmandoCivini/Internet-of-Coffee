@@ -21,9 +21,9 @@ pub fn producer(order_resources: Arc<ConsumerProducerOrders>) {
     }
     let mut stop_write = order_resources.stop.write().unwrap();
     *stop_write = State::FinishedReading;
-    println!("finished producer");
+    println!("apagando productor");
     for _i in 0..100 {
-        // unlocks waiting threads
+        //desbloquea threads en espera
         order_resources.not_empty.release();
     }
 }

@@ -11,7 +11,7 @@ impl Display for Ingridients {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(
             f,
-            "container levels{{coffee beans:{}, grounded coffee:{}, milk:{}, foam:{}}}",
+            "niveles de contenedores: {{granos:{}, cafe:{}, leche:{}, espuma:{}}}",
             self.g, self.c, self.l, self.e
         )
     }
