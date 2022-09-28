@@ -1,5 +1,5 @@
 use std::sync::{Arc, Condvar, Mutex, RwLock};
-use std::thread;
+use std::{thread, time::Duration};
 use std::thread::JoinHandle;
 use std_semaphore::Semaphore;
 
@@ -17,6 +17,24 @@ use order_processor::producer;
 
 mod ingridient_reloader;
 use crate::ingridient_reloader::ingridient_reloader::ingridient_reloader;
+
+fn display_stats(stop: Arc<RwLock<bool>>, stats: Arc<RwLock<Stats>>) {
+    let mut cond: bool;
+    {
+        let stop_read = stop.read().unwrap();
+        cond = *stop_read;
+    }
+    while !cond {
+        thread::sleep(Duration::from_millis(3000));
+        {
+        println!("{}", stats.read().unwrap());
+        }
+        {
+            let stop_read = stop.read().unwrap();
+            cond = *stop_read;
+        }
+    }
+}
 
 fn main() {
     let dispensers_number = 10;
@@ -73,6 +91,12 @@ fn main() {
 
     producer::producer(consumer_producer_orders_ref);
 
+    let end_of_orders_clone_second = end_of_orders.clone();
+    let stats_clone_second = stats_ref.clone();
+    let stats_thread = thread::spawn(move || {
+        display_stats(end_of_orders_clone_second, stats_clone_second);
+    });
+
     dispensers_threads
         .into_iter()
         .flat_map(|x| x.join())
@@ -89,6 +113,6 @@ fn main() {
     }
     cvar.notify_all();
     realoder_thread.join().unwrap();
-
-    println!("{}", stats_ref.read().unwrap());
+    stats_thread.join().unwrap();
+    //println!("{}", stats_ref.read().unwrap());
 }
