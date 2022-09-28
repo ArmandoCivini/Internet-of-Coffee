@@ -17,7 +17,7 @@ fn grab_ingridients(
 ) {
     {
         let mut ingridient_guard = cvar
-            .wait_while(lock.lock().unwrap(), |ingridients| {
+            .wait_while(lock.lock().expect("no se pudo lockear los ingredientes"), |ingridients| {
                 println!("{}", *ingridients);
                 if *coffee_missing > 0 && ingridients.c > 0 {
                     return false;
@@ -27,7 +27,7 @@ fn grab_ingridients(
                 }
                 true
             })
-            .unwrap();
+            .expect("error en la condvar de los ingredientes");
         if ingridient_guard.c > *coffee_missing {
             ingridient_guard.c -= *coffee_missing;
             *coffee_missing = 0;
@@ -62,7 +62,7 @@ fn dispenser(order: &OrderFormat, ingridients_pair: &Arc<(Mutex<Ingridients>, Co
 }
 
 fn register_order(order: &OrderFormat, stats_lock: &Arc<RwLock<Stats>>) {
-    let mut stats = stats_lock.write().unwrap();
+    let mut stats = stats_lock.write().expect("no se pudo escribir en los stats");
     stats.c_consumed += order.coffee;
     stats.e_consumed += order.foam;
     stats.water_consumed += order.hot_water;
@@ -77,21 +77,21 @@ pub fn consumer(
     let mut cond: State;
     let mut order: OrderFormat;
     {
-        let stop_read = order_resources.stop.read().unwrap();
+        let stop_read = order_resources.stop.read().expect("no se pudo leer en el stop");
         cond = *stop_read;
     }
     while !matches!(cond, State::FinishedProcessing) {
         order_resources.not_empty.acquire();
         {
-            let mut buffer = order_resources.orders.write().unwrap();
+            let mut buffer = order_resources.orders.write().expect("no se pudo escribir en el buffer de ordenes");
             if buffer.len() == 0 {
                 if matches!(cond, State::FinishedReading) {
                     println!("alertando");
-                    let mut stop_write = order_resources.stop.write().unwrap();
+                    let mut stop_write = order_resources.stop.write().expect("no se pudo escribir en el stop");
                     *stop_write = State::FinishedProcessing;
                 }
                 {
-                    let stop_read = order_resources.stop.read().unwrap();
+                    let stop_read = order_resources.stop.read().expect("no se pudo leer en el stop");
                     cond = *stop_read;
                 }
                 continue;
@@ -102,7 +102,7 @@ pub fn consumer(
         dispenser(&order, &ingridients_pair);
         register_order(&order, &stats);
         {
-            let stop_read = order_resources.stop.read().unwrap();
+            let stop_read = order_resources.stop.read().expect("no se pudo leer en el stop");
             cond = *stop_read;
         }
     }

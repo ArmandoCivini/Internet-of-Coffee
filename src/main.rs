@@ -87,16 +87,16 @@ fn main() {
         .flat_map(|x| x.join())
         .for_each(drop);
     {
-        let mut stop_reloader = end_of_orders.write().unwrap();
+        let mut stop_reloader = end_of_orders.write().expect("no se pudo escribir en stop");
         *stop_reloader = true;
     }
     let (lock, cvar) = &*ingridients_pair;
     {
         //desbloquea la condvar del reloader
-        let mut ingridientss = lock.lock().unwrap();
+        let mut ingridientss = lock.lock().expect("no se pudo conseguir el mutex de ingredientes");
         ingridientss.c = 0;
     }
     cvar.notify_all();
-    realoder_thread.join().unwrap();
-    stats_thread.join().unwrap();
+    realoder_thread.join().expect("no se pudo joinear la thread del recargador");
+    stats_thread.join().expect("no se pudo joinear la thread de estadisticas");
 }
