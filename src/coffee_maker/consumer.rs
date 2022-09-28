@@ -2,7 +2,7 @@ use crate::types::consumer_producer_orders::ConsumerProducerOrders;
 use crate::types::ingridients::Ingridients;
 use crate::types::order_format::OrderFormat;
 use crate::types::state::State;
-use  crate::types::stats::Stats;
+use crate::types::stats::Stats;
 use std::sync::{Arc, Condvar, Mutex, RwLock};
 use std::{thread, time::Duration};
 
@@ -61,7 +61,7 @@ fn dispenser(order: &OrderFormat, ingridients_pair: &Arc<(Mutex<Ingridients>, Co
     ingridient_sleep(order.hot_water);
 }
 
-fn register_order(order: &OrderFormat, stats_lock: &Arc<RwLock<Stats>>){
+fn register_order(order: &OrderFormat, stats_lock: &Arc<RwLock<Stats>>) {
     let mut stats = stats_lock.write().unwrap();
     stats.c_consumed += order.coffee;
     stats.e_consumed += order.foam;
@@ -72,7 +72,7 @@ fn register_order(order: &OrderFormat, stats_lock: &Arc<RwLock<Stats>>){
 pub fn consumer(
     order_resources: Arc<ConsumerProducerOrders>,
     ingridients_pair: Arc<(Mutex<Ingridients>, Condvar)>,
-    stats: Arc<RwLock<Stats>>
+    stats: Arc<RwLock<Stats>>,
 ) {
     let mut cond: State;
     let mut order: OrderFormat;
