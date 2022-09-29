@@ -74,7 +74,7 @@ fn main() {
         ingridient_reloader(ingridients_pair_clone, end_of_orders_clone, stats_clone);
     });
 
-    producer::producer(consumer_producer_orders_ref);
+    producer::producer(consumer_producer_orders_ref, "./orders/ordenes1.csv");
 
     let end_of_orders_clone_second = end_of_orders.clone();
     let stats_clone_second = stats_ref.clone();

@@ -69,14 +69,14 @@ pub fn ingridient_reloader(
     let (lock, cvar) = &*ingridients_pair;
     let mut reload_coffee: bool;
     let mut cond: bool;
+    reload_coffee = wait_missing_ingridients(&lock, &cvar);
+    cvar.notify_all();
     {
         let stop_read = end_of_orders
             .read()
             .expect("no se pudo leer el stop de ordenes");
         cond = *stop_read;
     }
-    reload_coffee = wait_missing_ingridients(&lock, &cvar);
-    cvar.notify_all();
     while !cond {
         reload(lock, reload_coffee);
         println!("Fin de recarga");
