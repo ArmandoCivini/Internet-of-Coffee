@@ -1,5 +1,6 @@
 use std::fmt::{self, Display, Formatter};
 
+///Estadisticas de los productor consumidos.
 pub struct Stats {
     pub g_consumed: i32,
     pub c_consumed: i32,

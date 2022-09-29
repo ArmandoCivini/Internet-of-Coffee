@@ -1,5 +1,6 @@
 use std::fmt::{self, Display, Formatter};
 
+///Formato de la orden de un cafe.
 pub struct OrderFormat {
     pub coffee: i32,
     pub hot_water: i32,

@@ -1,5 +1,5 @@
 use std::sync::{Arc, Condvar, Mutex, RwLock};
-use std::{thread};
+use std::thread;
 use std::thread::JoinHandle;
 use std_semaphore::Semaphore;
 
@@ -93,10 +93,16 @@ fn main() {
     let (lock, cvar) = &*ingridients_pair;
     {
         //desbloquea la condvar del reloader
-        let mut ingridientss = lock.lock().expect("no se pudo conseguir el mutex de ingredientes");
+        let mut ingridientss = lock
+            .lock()
+            .expect("no se pudo conseguir el mutex de ingredientes");
         ingridientss.c = 0;
     }
     cvar.notify_all();
-    realoder_thread.join().expect("no se pudo joinear la thread del recargador");
-    stats_thread.join().expect("no se pudo joinear la thread de estadisticas");
+    realoder_thread
+        .join()
+        .expect("no se pudo joinear la thread del recargador");
+    stats_thread
+        .join()
+        .expect("no se pudo joinear la thread de estadisticas");
 }

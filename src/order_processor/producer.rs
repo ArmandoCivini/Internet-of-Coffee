@@ -3,6 +3,8 @@ use crate::types::order_format::OrderFormat;
 use crate::types::state::State;
 use std::sync::Arc;
 
+/// este modulo se encarga de leer ordenes del archivo y agregarlo al buffer protegido por semaforos.
+/// Se comporta como el productor de un patron productor-consumidor
 pub fn producer(order_resources: Arc<ConsumerProducerOrders>) {
     let mut i = 0;
     while i < 50 {
@@ -13,13 +15,19 @@ pub fn producer(order_resources: Arc<ConsumerProducerOrders>) {
                 hot_water: 2,
                 foam: 3,
             };
-            let mut buffer = order_resources.orders.write().expect("el productor no pudo escribir en el buffer");
+            let mut buffer = order_resources
+                .orders
+                .write()
+                .expect("el productor no pudo escribir en el buffer");
             buffer.push(resource);
         }
         order_resources.not_empty.release();
         i += 1;
     }
-    let mut stop_write = order_resources.stop.write().expect("el productor no pudo escribir en el estado");
+    let mut stop_write = order_resources
+        .stop
+        .write()
+        .expect("el productor no pudo escribir en el estado");
     *stop_write = State::FinishedReading;
     println!("apagando productor");
     for _i in 0..100 {

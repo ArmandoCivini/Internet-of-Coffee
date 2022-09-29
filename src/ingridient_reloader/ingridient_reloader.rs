@@ -3,9 +3,12 @@ use crate::types::stats::Stats;
 use std::sync::{Arc, Condvar, Mutex, RwLock};
 use std::{thread, time::Duration};
 
+///Espera un tiempo de recarga y luego repone los ingredientes faltantes.
 fn reload(ingridients_mutex: &Mutex<Ingridients>, reload_coffee: bool) {
     thread::sleep(Duration::from_millis(300));
-    let mut ingridients = ingridients_mutex.lock().expect("no se pudo conseguir el mutex de ingredientes");
+    let mut ingridients = ingridients_mutex
+        .lock()
+        .expect("no se pudo conseguir el mutex de ingredientes");
     if reload_coffee {
         //10 unidades de crudo son 100 unidades de producto
         ingridients.c = 100;
@@ -28,8 +31,11 @@ fn reload(ingridients_mutex: &Mutex<Ingridients>, reload_coffee: bool) {
     println!("fin de la recarga");
 }
 
+///Actualiza las estadisticas despues de recargar ingredientes.
 fn update_stats(stats_lock: &Arc<RwLock<Stats>>, reload_coffee: bool) {
-    let mut stats = stats_lock.write().expect("no se pudo escribir en los stats");
+    let mut stats = stats_lock
+        .write()
+        .expect("no se pudo escribir en los stats");
     if reload_coffee {
         stats.g_consumed += 10;
     } else {
@@ -37,11 +43,13 @@ fn update_stats(stats_lock: &Arc<RwLock<Stats>>, reload_coffee: bool) {
     }
 }
 
+///Espera hasta que haya algun ingrediente faltante.
 fn wait_missing_ingridients(lock: &Mutex<Ingridients>, cvar: &Condvar) -> bool {
     let ingridient_guard = cvar
-        .wait_while(lock.lock().expect("no se pudo lockear los ingredientes"), |ingridients| {
-            ingridients.c > 0 && ingridients.e > 0
-        })
+        .wait_while(
+            lock.lock().expect("no se pudo lockear los ingredientes"),
+            |ingridients| ingridients.c > 0 && ingridients.e > 0,
+        )
         .expect("fallo en la condvar de ingredientes");
     if ingridient_guard.c == 0 {
         println!("Recargando cafe");
@@ -52,6 +60,7 @@ fn wait_missing_ingridients(lock: &Mutex<Ingridients>, cvar: &Condvar) -> bool {
     }
 }
 
+///Recarga ingredientes
 pub fn ingridient_reloader(
     ingridients_pair: Arc<(Mutex<Ingridients>, Condvar)>,
     end_of_orders: Arc<RwLock<bool>>,
@@ -61,7 +70,9 @@ pub fn ingridient_reloader(
     let mut reload_coffee: bool;
     let mut cond: bool;
     {
-        let stop_read = end_of_orders.read().expect("no se pudo leer el stop de ordenes");
+        let stop_read = end_of_orders
+            .read()
+            .expect("no se pudo leer el stop de ordenes");
         cond = *stop_read;
     }
     reload_coffee = wait_missing_ingridients(&lock, &cvar);
@@ -74,7 +85,9 @@ pub fn ingridient_reloader(
         reload_coffee = wait_missing_ingridients(&lock, &cvar);
         cvar.notify_all();
         {
-            let stop_read = end_of_orders.read().expect("no se pudo leer el stop de ordenes");
+            let stop_read = end_of_orders
+                .read()
+                .expect("no se pudo leer el stop de ordenes");
             cond = *stop_read;
         }
     }

@@ -3,6 +3,7 @@ use crate::types::state::State;
 use std::sync::RwLock;
 use std_semaphore::Semaphore;
 
+///Estructuras necesarias para un buffer con el patron productor-consumidor.
 pub struct ConsumerProducerOrders {
     pub not_empty: Semaphore,
     pub not_full: Semaphore,

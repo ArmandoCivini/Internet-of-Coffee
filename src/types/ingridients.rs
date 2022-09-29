@@ -1,5 +1,6 @@
 use std::fmt::{self, Display, Formatter};
 
+///Ingredientes que usa la cafetera.
 pub struct Ingridients {
     pub g: i32,
     pub c: i32,
