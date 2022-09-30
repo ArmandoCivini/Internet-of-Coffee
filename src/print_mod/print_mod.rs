@@ -1,5 +1,5 @@
 #[cfg(not(test))]
-///Imprime normalmente en una corrida normal pero para test escribe a un archivo
+///Imprime normalmente. Excepto en tests donde imprime a un archivo.
 pub fn print_mod(string: String) {
     println!("{}", string);
 }
@@ -7,11 +7,13 @@ pub fn print_mod(string: String) {
 #[cfg(test)]
 use {std::fs::OpenOptions, std::io::prelude::*};
 #[cfg(test)]
+///Escribe los logs del programa a un archivo.
+/// Se asume que el archivo existe, de no ser asi ecurre un error.
 pub fn print_mod(string: String) {
     let mut file = OpenOptions::new()
         .write(true)
         .append(true)
-        .open("./log")
-        .expect("couldnt open file");
+        .open("./log/log")
+        .expect("no se pudo abrir el archivo");
     writeln!(file, "{}", string).expect("");
 }

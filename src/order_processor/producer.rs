@@ -7,7 +7,7 @@ use std::io::{self, BufRead};
 use std::path::Path;
 use std::sync::Arc;
 
-///Esta funcion se obtuvo de https://doc.rust-lang.org/rust-by-example/std_misc/file/read_lines.html
+///Esta funcion se obtuvo de <https://doc.rust-lang.org/rust-by-example/std_misc/file/read_lines.html>
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 where
     P: AsRef<Path>,
@@ -55,5 +55,101 @@ pub fn producer(order_resources: Arc<ConsumerProducerOrders>, path: &str) {
     for _i in 0..100 {
         //desbloquea threads en espera
         order_resources.not_empty.release();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::File;
+    use std::sync::{Arc, RwLock};
+    use std::thread;
+    use std_semaphore::Semaphore;
+
+    use crate::order_processor::producer;
+    use crate::types::consumer_producer_orders::ConsumerProducerOrders;
+    use crate::types::order_format::OrderFormat;
+    use crate::types::state::State;
+
+    #[test]
+    fn test_all_is_read_small_buffer() {
+        test_all_is_read(20);
+    }
+
+    #[test]
+    fn test_all_is_read_big_buffer() {
+        test_all_is_read(100);
+    }
+
+    fn test_all_is_read(orders_buffer_size: isize) {
+        //crea el archivo de logs si no existe, si existe lo trunca
+        File::create("./log/log").expect("no se pudo crear el archivo");
+        let mut order_num = 0;
+        let stop = RwLock::new(State::Reading);
+        let consumer_producer_orders = ConsumerProducerOrders {
+            not_empty: Semaphore::new(0),
+            not_full: Semaphore::new(orders_buffer_size),
+            orders: RwLock::new(Vec::new()),
+            stop: stop,
+        };
+        let consumer_producer_orders_ref = Arc::new(consumer_producer_orders);
+
+        let consumer_producer_orders_clone = consumer_producer_orders_ref.clone();
+        let producer_thread = thread::spawn(move || {
+            producer::producer(consumer_producer_orders_clone, "./orders/ordenes1.csv");
+        });
+
+        let mut cond: State;
+        let mut order: OrderFormat;
+        {
+            let stop_read = consumer_producer_orders_ref
+                .stop
+                .read()
+                .expect("no se pudo leer en el stop");
+            cond = *stop_read;
+        }
+        while !matches!(cond, State::FinishedProcessing) {
+            consumer_producer_orders_ref.not_empty.acquire();
+            {
+                let mut buffer = consumer_producer_orders_ref
+                    .orders
+                    .write()
+                    .expect("no se pudo escribir en el buffer de ordenes");
+                if buffer.len() == 0 {
+                    if matches!(cond, State::FinishedReading) {
+                        let mut stop_write = consumer_producer_orders_ref
+                            .stop
+                            .write()
+                            .expect("no se pudo escribir en el stop");
+                        *stop_write = State::FinishedProcessing;
+                    }
+                    {
+                        let stop_read = consumer_producer_orders_ref
+                            .stop
+                            .read()
+                            .expect("no se pudo leer en el stop");
+                        cond = *stop_read;
+                    }
+                    continue;
+                }
+                order = buffer.remove(0);
+                assert_eq!(3, order.coffee);
+                assert_eq!(2, order.hot_water);
+                assert_eq!(3, order.foam);
+                order_num += 1;
+                consumer_producer_orders_ref.not_full.release();
+            }
+            {
+                let stop_read = consumer_producer_orders_ref
+                    .stop
+                    .read()
+                    .expect("no se pudo leer en el stop");
+                cond = *stop_read;
+            }
+        }
+
+        producer_thread
+            .join()
+            .expect("error al joinear producer thread");
+        assert_eq!(50, order_num);
     }
 }
