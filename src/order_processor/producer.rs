@@ -1,3 +1,4 @@
+use crate::print_mod::print_mod::print_mod;
 use crate::types::consumer_producer_orders::ConsumerProducerOrders;
 use crate::types::order_format::OrderFormat;
 use crate::types::state::State;
@@ -45,29 +46,12 @@ pub fn producer(order_resources: Arc<ConsumerProducerOrders>, path: &str) {
             }
         }
     }
-    // while i < 5 {
-    //     order_resources.not_full.acquire();
-    //     {
-    //         let resource = OrderFormat {
-    //             coffee: 3,
-    //             hot_water: 2,
-    //             foam: 3,
-    //         };
-    //         let mut buffer = order_resources
-    //             .orders
-    //             .write()
-    //             .expect("el productor no pudo escribir en el buffer");
-    //         buffer.push(resource);
-    //     }
-    //     order_resources.not_empty.release();
-    //     i += 1;
-    // }
     let mut stop_write = order_resources
         .stop
         .write()
         .expect("el productor no pudo escribir en el estado");
     *stop_write = State::FinishedReading;
-    println!("apagando productor");
+    print_mod(format!("apagando productor"));
     for _i in 0..100 {
         //desbloquea threads en espera
         order_resources.not_empty.release();

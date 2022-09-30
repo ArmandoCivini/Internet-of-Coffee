@@ -1,3 +1,4 @@
+use crate::print_mod::print_mod::print_mod;
 use crate::types::ingridients::Ingridients;
 use crate::types::stats::Stats;
 use std::sync::{Arc, Condvar, Mutex, RwLock};
@@ -21,14 +22,14 @@ fn reload(ingridients_mutex: &Mutex<Ingridients>, reload_coffee: bool) {
         //si se acaba crudo se recarga sin espera
         ingridients.g = 100;
     } else if ingridients.g < 25 {
-        println!("capacidad de ganos de cafe por debajo del 25%");
+        print_mod(format!("capacidad de ganos de cafe por debajo del 25%"));
     }
     if ingridients.l == 0 {
         ingridients.l = 100;
     } else if ingridients.l < 25 {
-        println!("capacidad de leche fria por debajo del 25%");
+        print_mod(format!("capacidad de leche fria por debajo del 25%"));
     }
-    println!("fin de la recarga");
+    print_mod(format!("fin de la recarga"));
 }
 
 ///Actualiza las estadisticas despues de recargar ingredientes.
@@ -52,10 +53,10 @@ fn wait_missing_ingridients(lock: &Mutex<Ingridients>, cvar: &Condvar) -> bool {
         )
         .expect("fallo en la condvar de ingredientes");
     if ingridient_guard.c == 0 {
-        println!("Recargando cafe");
+        print_mod(format!("Recargando cafe"));
         return true;
     } else {
-        println!("Recargando leche");
+        print_mod(format!("Recargando leche"));
         return false;
     }
 }
@@ -79,7 +80,7 @@ pub fn ingridient_reloader(
     }
     while !cond {
         reload(lock, reload_coffee);
-        println!("Fin de recarga");
+        print_mod(format!("Fin de recarga"));
         cvar.notify_all();
         update_stats(&stats, reload_coffee);
         reload_coffee = wait_missing_ingridients(&lock, &cvar);
@@ -91,5 +92,5 @@ pub fn ingridient_reloader(
             cond = *stop_read;
         }
     }
-    println!("Apagando recargador");
+    print_mod(format!("Apagando recargador"));
 }

@@ -21,6 +21,8 @@ use crate::ingridient_reloader::ingridient_reloader::ingridient_reloader;
 mod display_stats;
 use crate::display_stats::display_stats::display_stats;
 
+mod print_mod;
+
 fn main() {
     let dispensers_number = 10;
     let orders_buffer_size = 20;

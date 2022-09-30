@@ -1,3 +1,4 @@
+use crate::print_mod::print_mod::print_mod;
 use crate::types::consumer_producer_orders::ConsumerProducerOrders;
 use crate::types::ingridients::Ingridients;
 use crate::types::order_format::OrderFormat;
@@ -25,7 +26,7 @@ fn grab_ingridients(
             .wait_while(
                 lock.lock().expect("no se pudo lockear los ingredientes"),
                 |ingridients| {
-                    println!("{}", *ingridients);
+                    print_mod(format!("{}", *ingridients));
                     if *coffee_missing > 0 && ingridients.c > 0 {
                         return false;
                     }
@@ -58,13 +59,13 @@ fn grab_ingridients(
 /// Luego espera el tiempo de preparacion de la orden.
 fn dispenser(order: &OrderFormat, ingridients_pair: &Arc<(Mutex<Ingridients>, Condvar)>) {
     let (lock, cvar) = &**ingridients_pair;
-    println!("preparando orden: {{{}}}", order);
+    print_mod(format!("preparando orden: {{{}}}", order));
     let mut coffee_missing = order.coffee;
     let mut milk_missing = order.foam;
     while coffee_missing > 0 || milk_missing > 0 {
         grab_ingridients(lock, cvar, &mut coffee_missing, &mut milk_missing);
     }
-    println!("se termino de recojer ingredientes");
+    print_mod(format!("se termino de recojer ingredientes"));
 
     //tiempo de preparacion
     ingridient_sleep(order.coffee);
@@ -108,7 +109,7 @@ pub fn consumer(
                 .expect("no se pudo escribir en el buffer de ordenes");
             if buffer.len() == 0 {
                 if matches!(cond, State::FinishedReading) {
-                    println!("alertando");
+                    print_mod(format!("alertando"));
                     let mut stop_write = order_resources
                         .stop
                         .write()
@@ -137,5 +138,5 @@ pub fn consumer(
             cond = *stop_read;
         }
     }
-    println!("fin de consumidor");
+    print_mod(format!("fin de consumidor"));
 }
