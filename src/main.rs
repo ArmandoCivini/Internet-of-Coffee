@@ -22,8 +22,13 @@ mod display_stats;
 use crate::display_stats::display_stats::display_stats;
 
 mod print_mod;
+use crate::print_mod::print_mod::print_mod;
 
 fn main() {
+    ioc_start();
+}
+
+fn ioc_start() {
     let dispensers_number = 10;
     let orders_buffer_size = 20;
 
@@ -107,4 +112,31 @@ fn main() {
     stats_thread
         .join()
         .expect("no se pudo joinear la thread de estadisticas");
+
+    print_mod(format!(
+        "{}",
+        stats_ref.read().expect("no se pudo leer los stats")
+    ));
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::ioc_start;
+    use serial_test::serial;
+    use std::fs::read_to_string;
+    use std::fs::File;
+    use std::{thread, time::Duration};
+    #[test]
+    #[serial]
+    /// Se nesecita correr el test serialmente sino otro test puede pisar los contenidos de log
+    fn test_full() {
+        thread::sleep(Duration::from_millis(100));
+        // Se nesecita tiempo para flushear los test anteriores,
+        // sino puede ser inpreciso el output.
+        File::create("./log/log").expect("no se pudo crear el archivo");
+        ioc_start();
+        let contents = read_to_string("./log/log").expect("Should have been able to read the file");
+        let all_threads_closed = contents.matches("fin de consumidor").count();
+        assert_eq!(10, all_threads_closed);
+    }
 }
