@@ -1,4 +1,4 @@
-use crate::print_mod::print_mod::print_mod;
+use crate::print_mod::print_mod;
 use crate::types::consumer_producer_orders::ConsumerProducerOrders;
 use crate::types::ingridients::Ingridients;
 use crate::types::order_format::OrderFormat;
@@ -65,7 +65,7 @@ fn dispenser(order: &OrderFormat, ingridients_pair: &Arc<(Mutex<Ingridients>, Co
     while coffee_missing > 0 || milk_missing > 0 {
         grab_ingridients(lock, cvar, &mut coffee_missing, &mut milk_missing);
     }
-    print_mod(format!("se termino de recojer ingredientes"));
+    print_mod("se termino de recojer ingredientes".to_string());
 
     //tiempo de preparacion
     ingridient_sleep(order.coffee);
@@ -109,7 +109,7 @@ pub fn consumer(
                 .expect("no se pudo escribir en el buffer de ordenes");
             if buffer.len() == 0 {
                 if matches!(cond, State::FinishedReading) {
-                    print_mod(format!("alertando"));
+                    print_mod("alertando".to_string());
                     let mut stop_write = order_resources
                         .stop
                         .write()
@@ -138,5 +138,5 @@ pub fn consumer(
             cond = *stop_read;
         }
     }
-    print_mod(format!("fin de consumidor"));
+    print_mod("fin de consumidor".to_string());
 }

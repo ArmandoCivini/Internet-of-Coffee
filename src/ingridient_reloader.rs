@@ -1,4 +1,4 @@
-use crate::print_mod::print_mod::print_mod;
+use crate::print_mod::print_mod;
 use crate::types::ingridients::Ingridients;
 use crate::types::stats::Stats;
 use std::sync::{Arc, Condvar, Mutex, RwLock};
@@ -22,14 +22,14 @@ fn reload(ingridients_mutex: &Mutex<Ingridients>, reload_coffee: bool) {
         //si se acaba crudo se recarga sin espera
         ingridients.g = 100;
     } else if ingridients.g < 25 {
-        print_mod(format!("capacidad de ganos de cafe por debajo del 25%"));
+        print_mod("capacidad de ganos de cafe por debajo del 25%".to_string());
     }
     if ingridients.l == 0 {
         ingridients.l = 100;
     } else if ingridients.l < 25 {
-        print_mod(format!("capacidad de leche fria por debajo del 25%"));
+        print_mod("capacidad de leche fria por debajo del 25%".to_string());
     }
-    print_mod(format!("fin de la recarga"));
+    print_mod("fin de la recarga".to_string());
 }
 
 ///Actualiza las estadisticas despues de recargar ingredientes.
@@ -53,11 +53,11 @@ fn wait_missing_ingridients(lock: &Mutex<Ingridients>, cvar: &Condvar) -> bool {
         )
         .expect("fallo en la condvar de ingredientes");
     if ingridient_guard.c == 0 {
-        print_mod(format!("Recargando cafe"));
-        return true;
+        print_mod("Recargando cafe".to_string());
+        true
     } else {
-        print_mod(format!("Recargando leche"));
-        return false;
+        print_mod("Recargando leche".to_string());
+        false
     }
 }
 
@@ -70,7 +70,7 @@ pub fn ingridient_reloader(
     let (lock, cvar) = &*ingridients_pair;
     let mut reload_coffee: bool;
     let mut cond: bool;
-    reload_coffee = wait_missing_ingridients(&lock, &cvar);
+    reload_coffee = wait_missing_ingridients(lock, cvar);
     cvar.notify_all();
     {
         let stop_read = end_of_orders
@@ -80,10 +80,10 @@ pub fn ingridient_reloader(
     }
     while !cond {
         reload(lock, reload_coffee);
-        print_mod(format!("Fin de recarga"));
+        print_mod("Fin de recarga".to_string());
         cvar.notify_all();
         update_stats(&stats, reload_coffee);
-        reload_coffee = wait_missing_ingridients(&lock, &cvar);
+        reload_coffee = wait_missing_ingridients(lock, cvar);
         cvar.notify_all();
         {
             let stop_read = end_of_orders
@@ -92,5 +92,5 @@ pub fn ingridient_reloader(
             cond = *stop_read;
         }
     }
-    print_mod(format!("Apagando recargador"));
+    print_mod("Apagando recargador".to_string());
 }

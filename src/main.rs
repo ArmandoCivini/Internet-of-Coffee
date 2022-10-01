@@ -9,25 +9,26 @@ use types::ingridients::Ingridients;
 use types::state::State;
 use types::stats::Stats;
 
-mod coffee_maker;
-use coffee_maker::consumer;
+mod consumer;
+use consumer::consumer;
 
-mod order_processor;
-use order_processor::producer;
+mod producer;
+use producer::producer;
 
 mod ingridient_reloader;
-use crate::ingridient_reloader::ingridient_reloader::ingridient_reloader;
+use crate::ingridient_reloader::ingridient_reloader;
 
 mod display_stats;
-use crate::display_stats::display_stats::display_stats;
+use crate::display_stats::display_stats;
 
 mod print_mod;
-use crate::print_mod::print_mod::print_mod;
+use crate::print_mod::print_mod;
 
 fn main() {
     ioc_start();
 }
 
+#[allow(clippy::needless_collect)]
 fn ioc_start() {
     let dispensers_number = 10;
     let orders_buffer_size = 20;
@@ -64,7 +65,7 @@ fn ioc_start() {
             let ingridients_pair_clone = ingridients_pair.clone();
             let stats_clone = stats_ref.clone();
             thread::spawn(move || {
-                consumer::consumer(
+                consumer(
                     consumer_producer_orders_clone,
                     ingridients_pair_clone,
                     stats_clone,
@@ -81,7 +82,7 @@ fn ioc_start() {
         ingridient_reloader(ingridients_pair_clone, end_of_orders_clone, stats_clone);
     });
 
-    producer::producer(consumer_producer_orders_ref, "./orders/ordenes1.csv");
+    producer(consumer_producer_orders_ref, "./orders/ordenes1.csv");
 
     let end_of_orders_clone_second = end_of_orders.clone();
     let stats_clone_second = stats_ref.clone();
