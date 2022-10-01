@@ -1,5 +1,4 @@
-use std::sync::{Arc, Condvar, Mutex, RwLock};
-use std::thread;
+use crate::sync::{thread, Arc, Condvar, Mutex, RwLock};
 use std::thread::JoinHandle;
 use std_semaphore::Semaphore;
 
@@ -24,12 +23,38 @@ use crate::display_stats::display_stats;
 mod print_mod;
 use crate::print_mod::print_mod;
 
+mod sync {
+    use std::time::Duration;
+
+    #[cfg(not(loom))]
+    pub(crate) use std::sync::{Arc, Condvar, Mutex, RwLock};
+
+    #[cfg(loom)]
+    pub(crate) use loom::sync::{Arc, Condvar, Mutex, RwLock};
+
+    #[cfg(not(loom))]
+    pub(crate) use std::thread;
+
+    #[cfg(loom)]
+    pub(crate) use loom::thread;
+
+    #[cfg(not(loom))]
+    pub(crate) fn sleep(d: Duration) {
+        thread::sleep(d);
+    }
+
+    #[cfg(loom)]
+    pub(crate) fn sleep(d: Duration) {
+        loom::thread::yield_now();
+    }
+}
+
 fn main() {
-    ioc_start();
+    ioc_start("./orders/ordenes1.csv");
 }
 
 #[allow(clippy::needless_collect)]
-fn ioc_start() {
+fn ioc_start(orders_file: &str) {
     let dispensers_number = 10;
     let orders_buffer_size = 20;
 
@@ -82,7 +107,7 @@ fn ioc_start() {
         ingridient_reloader(ingridients_pair_clone, end_of_orders_clone, stats_clone);
     });
 
-    producer(consumer_producer_orders_ref, "./orders/ordenes1.csv");
+    producer(consumer_producer_orders_ref, orders_file);
 
     let end_of_orders_clone_second = end_of_orders.clone();
     let stats_clone_second = stats_ref.clone();
@@ -123,21 +148,67 @@ fn ioc_start() {
 #[cfg(test)]
 //Test integral
 mod tests {
-    use crate::ioc_start;
     use serial_test::serial;
     use std::fs::read_to_string;
     use std::fs::File;
-    use std::{thread, time::Duration};
+    use std::time::Duration;
+
+    use crate::ioc_start;
+    use crate::sync::sleep;
+
     #[test]
     #[serial]
     /// Se nesecita correr el test serialmente sino otro test puede pisar los contenidos de log
     fn test_full() {
-        thread::sleep(Duration::from_millis(100));
+        sleep(Duration::from_millis(100));
         // Se nesecita tiempo para flushear los test anteriores,
         // sino puede ser inpreciso el output.
         File::create("./log/log").expect("no se pudo crear el archivo");
 
-        ioc_start();
+        ioc_start("./orders/ordenes1.csv");
+
+        //Obtiene el stdout
+        let contents = read_to_string("./log/log").expect("Should have been able to read the file");
+
+        //Ver si todas las threads consumidor cerraron
+        let all_threads_closed = contents.matches("fin de consumidor").count();
+        assert_eq!(10, all_threads_closed);
+
+        //Ver si el productor cerro correctamente
+        assert!(contents.contains("apagando productor"));
+
+        //Ver si el recargador cerro correctamente
+        assert!(contents.contains("Apagando recargador"));
+
+        //Ver si los stats son los correctos, solo chequeo el ultimo print de stats
+        let char_pos = contents.rfind('{').expect("no se encontraron los stats");
+        let (_, stats) = contents.split_at(char_pos);
+        assert!(stats.contains("granos usados:10, cafe usado:150, leche usada:10, espuma usada:150, agua usada:100, cafe tomado:50}"));
+
+        //Ver si se alerto del porcentaje de granos de cafe correctamente
+        assert!(contents.contains("capacidad de ganos de cafe por debajo del 91%"));
+
+        //Ver si se alerto del porcentaje de leche fria correctamente
+        assert!(contents.contains("capacidad de leche fria por debajo del 91%"));
+
+        //Ver si todas las ordenes se procesaron
+        let all_orders_processed = contents
+            .matches("preparando orden: {cafe:3, agua:2, espuma:3}")
+            .count();
+        assert_eq!(50, all_orders_processed);
+    }
+}
+
+#[cfg(loom)]
+mod tests {
+
+    #[test]
+    fn loom_test_full() {
+        File::create("./log/log").expect("no se pudo crear el archivo");
+
+        loom::model(move || {
+            ioc_start("./orders/ordenes2.csv");
+        });
 
         //Obtiene el stdout
         let contents = read_to_string("./log/log").expect("Should have been able to read the file");

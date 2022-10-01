@@ -1,15 +1,15 @@
 use crate::print_mod::print_mod;
+use crate::sync::{sleep, Arc, Condvar, Mutex, RwLock};
 use crate::types::consumer_producer_orders::ConsumerProducerOrders;
 use crate::types::ingridients::Ingridients;
 use crate::types::order_format::OrderFormat;
 use crate::types::state::State;
 use crate::types::stats::Stats;
-use std::sync::{Arc, Condvar, Mutex, RwLock};
-use std::{thread, time::Duration};
+use std::time::Duration;
 
 ///Cuento se espera para una cierta cantidad de ingredientes.
 fn ingridient_sleep(ingridient: i32) {
-    thread::sleep(Duration::from_millis((ingridient as u64) * 100));
+    sleep(Duration::from_millis((ingridient as u64) * 100));
 }
 
 ///Espera hasta que haya ingredientes para tomar.

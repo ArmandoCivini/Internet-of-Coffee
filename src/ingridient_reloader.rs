@@ -1,12 +1,12 @@
 use crate::print_mod::print_mod;
+use crate::sync::{sleep, Arc, Condvar, Mutex, RwLock};
 use crate::types::ingridients::Ingridients;
 use crate::types::stats::Stats;
-use std::sync::{Arc, Condvar, Mutex, RwLock};
-use std::{thread, time::Duration};
+use std::time::Duration;
 
 ///Espera un tiempo de recarga y luego repone los ingredientes faltantes.
 fn reload(ingridients_mutex: &Mutex<Ingridients>, reload_coffee: bool) {
-    thread::sleep(Duration::from_millis(300));
+    sleep(Duration::from_millis(300));
     let mut ingridients = ingridients_mutex
         .lock()
         .expect("no se pudo conseguir el mutex de ingredientes");

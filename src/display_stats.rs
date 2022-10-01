@@ -1,7 +1,7 @@
 use crate::print_mod::print_mod;
+use crate::sync::{sleep, Arc, RwLock};
 use crate::types::stats::Stats;
-use std::sync::{Arc, RwLock};
-use std::{thread, time::Duration};
+use std::time::Duration;
 
 ///Cada cierto intervalo de tiempo imprime en pantalla las estadisticas
 pub fn display_stats(stop: Arc<RwLock<bool>>, stats: Arc<RwLock<Stats>>) {
@@ -11,7 +11,7 @@ pub fn display_stats(stop: Arc<RwLock<bool>>, stats: Arc<RwLock<Stats>>) {
         cond = *stop_read;
     }
     while !cond {
-        thread::sleep(Duration::from_millis(3000));
+        sleep(Duration::from_millis(3000));
         {
             print_mod(format!(
                 "{}",

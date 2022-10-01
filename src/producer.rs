@@ -1,11 +1,12 @@
+use crate::sync::Arc;
+use std::fs::File;
+use std::io::{self, BufRead};
+use std::path::Path;
+
 use crate::print_mod::print_mod;
 use crate::types::consumer_producer_orders::ConsumerProducerOrders;
 use crate::types::order_format::OrderFormat;
 use crate::types::state::State;
-use std::fs::File;
-use std::io::{self, BufRead};
-use std::path::Path;
-use std::sync::Arc;
 
 ///Esta funcion se obtuvo de <https://doc.rust-lang.org/rust-by-example/std_misc/file/read_lines.html>
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
@@ -58,9 +59,8 @@ pub fn producer(order_resources: Arc<ConsumerProducerOrders>, path: &str) {
 
 #[cfg(test)]
 mod tests {
+    use crate::sync::{thread, Arc, RwLock};
     use std::fs::File;
-    use std::sync::{Arc, RwLock};
-    use std::thread;
     use std_semaphore::Semaphore;
 
     use crate::producer;
