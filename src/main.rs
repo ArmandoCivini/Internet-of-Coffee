@@ -121,6 +121,7 @@ fn ioc_start() {
 }
 
 #[cfg(test)]
+//Test integral
 mod tests {
     use crate::ioc_start;
     use serial_test::serial;
@@ -135,9 +136,37 @@ mod tests {
         // Se nesecita tiempo para flushear los test anteriores,
         // sino puede ser inpreciso el output.
         File::create("./log/log").expect("no se pudo crear el archivo");
+
         ioc_start();
+
+        //Obtiene el stdout
         let contents = read_to_string("./log/log").expect("Should have been able to read the file");
+
+        //Ver si todas las threads consumidor cerraron
         let all_threads_closed = contents.matches("fin de consumidor").count();
         assert_eq!(10, all_threads_closed);
+
+        //Ver si el productor cerro correctamente
+        assert!(contents.contains("apagando productor"));
+
+        //Ver si el recargador cerro correctamente
+        assert!(contents.contains("Apagando recargador"));
+
+        //Ver si los stats son los correctos, solo chequeo el ultimo print de stats
+        let char_pos = contents.rfind('{').expect("no se encontraron los stats");
+        let (_, stats) = contents.split_at(char_pos);
+        assert!(stats.contains("granos usados:10, cafe usado:150, leche usada:10, espuma usada:150, agua usada:100, cafe tomado:50}"));
+
+        //Ver si se alerto del porcentaje de granos de cafe correctamente
+        assert!(contents.contains("capacidad de ganos de cafe por debajo del 91%"));
+
+        //Ver si se alerto del porcentaje de leche fria correctamente
+        assert!(contents.contains("capacidad de leche fria por debajo del 91%"));
+
+        //Ver si todas las ordenes se procesaron
+        let all_orders_processed = contents
+            .matches("preparando orden: {cafe:3, agua:2, espuma:3}")
+            .count();
+        assert_eq!(50, all_orders_processed);
     }
 }

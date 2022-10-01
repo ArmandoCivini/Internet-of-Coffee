@@ -21,13 +21,13 @@ fn reload(ingridients_mutex: &Mutex<Ingridients>, reload_coffee: bool) {
     if ingridients.g == 0 {
         //si se acaba crudo se recarga sin espera
         ingridients.g = 100;
-    } else if ingridients.g < 25 {
-        print_mod("capacidad de ganos de cafe por debajo del 25%".to_string());
+    } else if ingridients.g < 91 {
+        print_mod("capacidad de ganos de cafe por debajo del 91%".to_string());
     }
     if ingridients.l == 0 {
         ingridients.l = 100;
-    } else if ingridients.l < 25 {
-        print_mod("capacidad de leche fria por debajo del 25%".to_string());
+    } else if ingridients.l < 91 {
+        print_mod("capacidad de leche fria por debajo del 91%".to_string());
     }
     print_mod("fin de la recarga".to_string());
 }
