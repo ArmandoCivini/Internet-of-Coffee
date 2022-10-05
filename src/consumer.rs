@@ -248,4 +248,14 @@ mod tests {
     fn test_grab_ingridients_exact() {
         test_grab_ingridients(10, 10, 10, 10, 0, 0, 0, 0);
     }
+
+    #[test]
+    fn test_grab_one_available() {
+        test_grab_ingridients(10, 10, 10, 0, 0, 10, 0, 0);
+    }
+
+    #[test]
+    fn test_grab_one_missing() {
+        test_grab_ingridients(0, 10, 10, 10, 0, 0, 10, 0);
+    }
 }
