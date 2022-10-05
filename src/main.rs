@@ -111,9 +111,8 @@ fn ioc_start(orders_file: &str) {
     producer(consumer_producer_orders_ref, orders_file);
 
     let end_of_orders_clone_second = end_of_orders.clone();
-    let stats_clone_second = stats_ref.clone();
     let stats_thread = thread::spawn(move || {
-        display_stats(end_of_orders_clone_second, stats_clone_second);
+        display_stats(end_of_orders_clone_second, stats_ref);
     });
 
     dispensers_threads
@@ -207,9 +206,7 @@ mod tests {
         assert!(stats.contains("granos usados:0, cafe usado:72, leche usada:0, espuma usada:77, agua usada:54, cafe tomado:10}"));
 
         //Ver si todas las ordenes se procesaron
-        let all_orders_processed = contents
-            .matches("preparando orden:")
-            .count();
+        let all_orders_processed = contents.matches("preparando orden:").count();
         assert_eq!(10, all_orders_processed);
     }
 

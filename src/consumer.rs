@@ -143,11 +143,15 @@ pub fn consumer(
 
 #[cfg(test)]
 mod tests {
-    use crate::{sync::{thread, Arc, RwLock}, types::order_format::OrderFormat, Stats, consumer::register_order};
+    use crate::{
+        consumer::{grab_ingridients, register_order},
+        sync::{thread, Arc, Condvar, Mutex, RwLock},
+        types::order_format::OrderFormat,
+        Ingridients, Stats,
+    };
 
     #[test]
     fn test_register_order() {
-
         let stats = Stats {
             g_consumed: 0,
             c_consumed: 0,
@@ -169,7 +173,9 @@ mod tests {
             register_order(&order, &stats_lock);
         });
 
-        register_thread.join().expect("no se pudo joinear el thread register");
+        register_thread
+            .join()
+            .expect("no se pudo joinear el thread register");
 
         let stats_mut = stats_ref.read().expect("no se pudo leer stats");
         assert_eq!(15, stats_mut.c_consumed);
@@ -180,4 +186,66 @@ mod tests {
         assert_eq!(0, stats_mut.l_consumed);
     }
 
+    fn test_grab_ingridients(
+        num_coffee: i32,
+        num_milk: i32,
+        added_coffee: i32,
+        added_milk: i32,
+        should_miss_coffee: i32,
+        should_miss_milk: i32,
+        should_remain_coffee: i32,
+        should_remain_milk: i32,
+    ) {
+        let ingridients = Ingridients {
+            g: 0,
+            c: 0,
+            l: 0,
+            e: 0,
+        };
+        let ingridients_pair = Arc::new((Mutex::new(ingridients), Condvar::new()));
+        let ingridients_pair_clone = ingridients_pair.clone();
+        let grab_thread = thread::spawn(move || {
+            let (lock, cvar) = &*ingridients_pair_clone;
+            let mut coffee_missing = num_coffee;
+            let mut milk_missing = num_milk;
+            grab_ingridients(lock, cvar, &mut coffee_missing, &mut milk_missing);
+            assert_eq!(should_miss_coffee, coffee_missing);
+            assert_eq!(should_miss_milk, milk_missing);
+        });
+
+        let (lock, cvar) = &*ingridients_pair;
+        {
+            let mut ingridients = lock.lock().expect("no se pudo agarrar los ingredientes");
+            assert_eq!(0, ingridients.c);
+            assert_eq!(0, ingridients.g);
+            assert_eq!(0, ingridients.l);
+            assert_eq!(0, ingridients.e);
+            ingridients.c = added_coffee;
+            ingridients.e = added_milk;
+        }
+        cvar.notify_all();
+        grab_thread.join().expect("no se pudo joinear el thread");
+        {
+            let ingridients = lock.lock().expect("no se pudo agarrar los ingredientes");
+            assert_eq!(should_remain_coffee, ingridients.c);
+            assert_eq!(0, ingridients.g);
+            assert_eq!(0, ingridients.l);
+            assert_eq!(should_remain_milk, ingridients.e);
+        }
+    }
+
+    #[test]
+    fn test_grab_ingridients_all_grabed() {
+        test_grab_ingridients(10, 10, 100, 100, 0, 0, 90, 90);
+    }
+
+    #[test]
+    fn test_grab_ingridients_cant_grab_all() {
+        test_grab_ingridients(20, 15, 10, 10, 10, 5, 0, 0);
+    }
+
+    #[test]
+    fn test_grab_ingridients_exact() {
+        test_grab_ingridients(10, 10, 10, 10, 0, 0, 0, 0);
+    }
 }

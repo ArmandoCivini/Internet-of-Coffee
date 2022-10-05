@@ -171,7 +171,6 @@ mod tests {
     #[test]
     #[cfg(loom)]
     fn loom_test() {
-
         loom::model(move || {
             let mut order: OrderFormat;
             let stop = RwLock::new(State::Reading);
@@ -182,7 +181,7 @@ mod tests {
                 stop: stop,
             };
             let consumer_producer_orders_ref = Arc::new(consumer_producer_orders);
-    
+
             let consumer_producer_orders_clone = consumer_producer_orders_ref.clone();
             let producer_thread = thread::spawn(move || {
                 producer::producer(consumer_producer_orders_clone, "./orders/ordenes3.csv");

@@ -1,32 +1,32 @@
-preparando orden: {cafe:20, agua:10, espuma:20}apagando productor
-
+preparando orden: {cafe:20, agua:10, espuma:20}
+apagando productorpreparando orden: {cafe:5, agua:9, espuma:2}
 niveles de contenedores: {granos:100, cafe:100, leche:100, espuma:100}
-se termino de recojer ingredientes
+
 preparando orden: {cafe:8, agua:9, espuma:8}
-niveles de contenedores: {granos:100, cafe:80, leche:100, espuma:80}preparando orden: {cafe:5, agua:9, espuma:2}
+niveles de contenedores: {granos:100, cafe:80, leche:100, espuma:80}se termino de recojer ingredientes
 
+preparando orden: {cafe:4, agua:5, espuma:10}
 se termino de recojer ingredientes
-niveles de contenedores: {granos:100, cafe:72, leche:100, espuma:72}preparando orden: {cafe:4, agua:5, espuma:10}
+niveles de contenedores: {granos:100, cafe:72, leche:100, espuma:72}preparando orden: {cafe:8, agua:1, espuma:9}
 
-se termino de recojer ingredientes
-niveles de contenedores: {granos:100, cafe:67, leche:100, espuma:70}
-preparando orden: {cafe:8, agua:1, espuma:9}se termino de recojer ingredientes
+preparando orden: {cafe:6, agua:1, espuma:6}se termino de recojer ingredientes
+niveles de contenedores: {granos:100, cafe:68, leche:100, espuma:62}
 
-preparando orden: {cafe:6, agua:1, espuma:6}
-niveles de contenedores: {granos:100, cafe:63, leche:100, espuma:60}
+niveles de contenedores: {granos:100, cafe:60, leche:100, espuma:53}se termino de recojer ingredientes
+
 preparando orden: {cafe:2, agua:9, espuma:2}
+preparando orden: {cafe:1, agua:3, espuma:6}se termino de recojer ingredientes
+
+niveles de contenedores: {granos:100, cafe:54, leche:100, espuma:47}
 se termino de recojer ingredientes
-niveles de contenedores: {granos:100, cafe:55, leche:100, espuma:51}
-preparando orden: {cafe:1, agua:3, espuma:6}
+niveles de contenedores: {granos:100, cafe:53, leche:100, espuma:41}
 se termino de recojer ingredientes
-preparando orden: {cafe:10, agua:2, espuma:7}
-niveles de contenedores: {granos:100, cafe:49, leche:100, espuma:45}
 niveles de contenedores: {granos:100, cafe:48, leche:100, espuma:39}
-se termino de recojer ingredientes
 se termino de recojer ingredientes
 preparando orden: {cafe:8, agua:5, espuma:7}
 niveles de contenedores: {granos:100, cafe:46, leche:100, espuma:37}
-se termino de recojer ingredientes
+se termino de recojer ingredientespreparando orden: {cafe:10, agua:2, espuma:7}
+
 niveles de contenedores: {granos:100, cafe:38, leche:100, espuma:30}
 se termino de recojer ingredientes
 alertando
