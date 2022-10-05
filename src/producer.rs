@@ -69,16 +69,33 @@ mod tests {
     use crate::types::state::State;
 
     #[test]
+    #[cfg(not(loom))]
     fn test_all_is_read_small_buffer() {
-        test_all_is_read(20);
+        test_all_is_read(20, "./orders/ordenes1.csv", 3, 2, 3, 50);
     }
 
     #[test]
+    #[cfg(not(loom))]
     fn test_all_is_read_big_buffer() {
-        test_all_is_read(100);
+        test_all_is_read(100, "./orders/ordenes1.csv", 3, 2, 3, 50);
     }
 
-    fn test_all_is_read(orders_buffer_size: isize) {
+    #[test]
+    #[cfg(loom)]
+    fn test_all_is_read_loom() {
+        loom::model(move || {
+            test_all_is_read(20, "./orders/ordenes3.csv", 20, 10, 20, 1);
+        });
+    }
+
+    fn test_all_is_read(
+        orders_buffer_size: isize,
+        orders_file: &'static str,
+        coffee: i32,
+        water: i32,
+        milk: i32,
+        lines: i32,
+    ) {
         //crea el archivo de logs si no existe, si existe lo trunca
         File::create("./log/log").expect("no se pudo crear el archivo");
         let mut order_num = 0;
@@ -93,7 +110,7 @@ mod tests {
 
         let consumer_producer_orders_clone = consumer_producer_orders_ref.clone();
         let producer_thread = thread::spawn(move || {
-            producer::producer(consumer_producer_orders_clone, "./orders/ordenes1.csv");
+            producer::producer(consumer_producer_orders_clone, orders_file);
         });
 
         let mut cond: State;
@@ -130,9 +147,9 @@ mod tests {
                     continue;
                 }
                 order = buffer.remove(0);
-                assert_eq!(3, order.coffee);
-                assert_eq!(2, order.hot_water);
-                assert_eq!(3, order.foam);
+                assert_eq!(coffee, order.coffee);
+                assert_eq!(water, order.hot_water);
+                assert_eq!(milk, order.foam);
                 order_num += 1;
                 consumer_producer_orders_ref.not_full.release();
             }
@@ -148,6 +165,41 @@ mod tests {
         producer_thread
             .join()
             .expect("error al joinear producer thread");
-        assert_eq!(50, order_num);
+        assert_eq!(lines, order_num);
+    }
+
+    #[test]
+    #[cfg(loom)]
+    fn loom_test() {
+
+        loom::model(move || {
+            let mut order: OrderFormat;
+            let stop = RwLock::new(State::Reading);
+            let consumer_producer_orders = ConsumerProducerOrders {
+                not_empty: Semaphore::new(0),
+                not_full: Semaphore::new(20),
+                orders: RwLock::new(Vec::new()),
+                stop: stop,
+            };
+            let consumer_producer_orders_ref = Arc::new(consumer_producer_orders);
+    
+            let consumer_producer_orders_clone = consumer_producer_orders_ref.clone();
+            let producer_thread = thread::spawn(move || {
+                producer::producer(consumer_producer_orders_clone, "./orders/ordenes3.csv");
+            });
+            consumer_producer_orders_ref.not_empty.acquire();
+            {
+                let mut buffer = consumer_producer_orders_ref
+                    .orders
+                    .write()
+                    .expect("no se pudo escribir en el buffer de ordenes");
+                order = buffer.remove(0);
+                assert_eq!(20, order.coffee);
+                assert_eq!(10, order.hot_water);
+                assert_eq!(20, order.foam);
+                consumer_producer_orders_ref.not_full.release();
+            }
+            producer_thread.join();
+        });
     }
 }

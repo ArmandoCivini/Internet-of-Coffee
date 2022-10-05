@@ -1,5 +1,4 @@
 use crate::sync::{thread, Arc, Condvar, Mutex, RwLock};
-use std::thread::JoinHandle;
 use std_semaphore::Semaphore;
 
 mod types;
@@ -21,7 +20,6 @@ mod display_stats;
 use crate::display_stats::display_stats;
 
 mod print_mod;
-use crate::print_mod::print_mod;
 
 mod sync {
     use std::time::Duration;
@@ -30,7 +28,10 @@ mod sync {
     pub(crate) use std::sync::{Arc, Condvar, Mutex, RwLock};
 
     #[cfg(loom)]
-    pub(crate) use loom::sync::{Arc, Condvar, Mutex, RwLock};
+    pub(crate) use loom::sync::{Arc, RwLock};
+
+    #[cfg(loom)]
+    pub(crate) use std::sync::{Condvar, Mutex};
 
     #[cfg(not(loom))]
     pub(crate) use std::thread;
@@ -44,7 +45,7 @@ mod sync {
     }
 
     #[cfg(loom)]
-    pub(crate) fn sleep(d: Duration) {
+    pub(crate) fn sleep(_d: Duration) {
         loom::thread::yield_now();
     }
 }
@@ -84,7 +85,7 @@ fn ioc_start(orders_file: &str) {
     };
     let stats_ref = Arc::new(RwLock::new(stats));
 
-    let dispensers_threads: Vec<JoinHandle<()>> = (0..dispensers_number)
+    let dispensers_threads: Vec<_> = (0..dispensers_number)
         .map(|_| {
             let consumer_producer_orders_clone = consumer_producer_orders_ref.clone();
             let ingridients_pair_clone = ingridients_pair.clone();
@@ -138,11 +139,6 @@ fn ioc_start(orders_file: &str) {
     stats_thread
         .join()
         .expect("no se pudo joinear la thread de estadisticas");
-
-    print_mod(format!(
-        "{}",
-        stats_ref.read().expect("no se pudo leer los stats")
-    ));
 }
 
 #[cfg(test)]
@@ -170,15 +166,7 @@ mod tests {
         //Obtiene el stdout
         let contents = read_to_string("./log/log").expect("Should have been able to read the file");
 
-        //Ver si todas las threads consumidor cerraron
-        let all_threads_closed = contents.matches("fin de consumidor").count();
-        assert_eq!(10, all_threads_closed);
-
-        //Ver si el productor cerro correctamente
-        assert!(contents.contains("apagando productor"));
-
-        //Ver si el recargador cerro correctamente
-        assert!(contents.contains("Apagando recargador"));
+        general_test_output(&contents);
 
         //Ver si los stats son los correctos, solo chequeo el ultimo print de stats
         let char_pos = contents.rfind('{').expect("no se encontraron los stats");
@@ -197,22 +185,35 @@ mod tests {
             .count();
         assert_eq!(50, all_orders_processed);
     }
-}
-
-#[cfg(loom)]
-mod tests {
 
     #[test]
-    fn loom_test_full() {
+    #[serial]
+    fn test_uneven() {
+        sleep(Duration::from_millis(100));
+        // Se nesecita tiempo para flushear los test anteriores,
+        // sino puede ser inpreciso el output.
         File::create("./log/log").expect("no se pudo crear el archivo");
 
-        loom::model(move || {
-            ioc_start("./orders/ordenes2.csv");
-        });
+        ioc_start("./orders/ordenes3.csv");
 
         //Obtiene el stdout
         let contents = read_to_string("./log/log").expect("Should have been able to read the file");
 
+        general_test_output(&contents);
+
+        //Ver si los stats son los correctos, solo chequeo el ultimo print de stats
+        let char_pos = contents.rfind('{').expect("no se encontraron los stats");
+        let (_, stats) = contents.split_at(char_pos);
+        assert!(stats.contains("granos usados:0, cafe usado:72, leche usada:0, espuma usada:77, agua usada:54, cafe tomado:10}"));
+
+        //Ver si todas las ordenes se procesaron
+        let all_orders_processed = contents
+            .matches("preparando orden:")
+            .count();
+        assert_eq!(10, all_orders_processed);
+    }
+
+    fn general_test_output(contents: &String) {
         //Ver si todas las threads consumidor cerraron
         let all_threads_closed = contents.matches("fin de consumidor").count();
         assert_eq!(10, all_threads_closed);
@@ -222,22 +223,5 @@ mod tests {
 
         //Ver si el recargador cerro correctamente
         assert!(contents.contains("Apagando recargador"));
-
-        //Ver si los stats son los correctos, solo chequeo el ultimo print de stats
-        let char_pos = contents.rfind('{').expect("no se encontraron los stats");
-        let (_, stats) = contents.split_at(char_pos);
-        assert!(stats.contains("granos usados:10, cafe usado:150, leche usada:10, espuma usada:150, agua usada:100, cafe tomado:50}"));
-
-        //Ver si se alerto del porcentaje de granos de cafe correctamente
-        assert!(contents.contains("capacidad de ganos de cafe por debajo del 91%"));
-
-        //Ver si se alerto del porcentaje de leche fria correctamente
-        assert!(contents.contains("capacidad de leche fria por debajo del 91%"));
-
-        //Ver si todas las ordenes se procesaron
-        let all_orders_processed = contents
-            .matches("preparando orden: {cafe:3, agua:2, espuma:3}")
-            .count();
-        assert_eq!(50, all_orders_processed);
     }
 }

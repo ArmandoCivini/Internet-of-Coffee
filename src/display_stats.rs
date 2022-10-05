@@ -4,6 +4,7 @@ use crate::types::stats::Stats;
 use std::time::Duration;
 
 ///Cada cierto intervalo de tiempo imprime en pantalla las estadisticas
+#[cfg(not(loom))]
 pub fn display_stats(stop: Arc<RwLock<bool>>, stats: Arc<RwLock<Stats>>) {
     let mut cond: bool;
     {
@@ -23,4 +24,10 @@ pub fn display_stats(stop: Arc<RwLock<bool>>, stats: Arc<RwLock<Stats>>) {
             cond = *stop_read;
         }
     }
+}
+
+#[cfg(loom)]
+#[warn(unused_variables)]
+pub fn display_stats(stop: Arc<RwLock<bool>>, stats: Arc<RwLock<Stats>>) {
+    
 }
