@@ -1,3 +1,4 @@
+#[cfg(not(loom))]
 use crate::print_mod::print_mod;
 use crate::sync::{sleep, Arc, RwLock};
 use crate::types::stats::Stats;
@@ -28,4 +29,4 @@ pub fn display_stats(stop: Arc<RwLock<bool>>, stats: Arc<RwLock<Stats>>) {
 
 #[cfg(loom)]
 #[warn(unused_variables)]
-pub fn display_stats(stop: Arc<RwLock<bool>>, _stats: Arc<RwLock<Stats>>) {}
+pub fn display_stats(_stop: Arc<RwLock<bool>>, _stats: Arc<RwLock<Stats>>) {}

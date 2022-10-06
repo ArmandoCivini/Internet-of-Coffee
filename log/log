@@ -1,33 +1,33 @@
-apagando productorpreparando orden: {cafe:20, agua:10, espuma:20}preparando orden: {cafe:5, agua:9, espuma:2}preparando orden: {cafe:8, agua:9, espuma:8}
-
+apagando productorpreparando orden: {cafe:20, agua:10, espuma:20}preparando orden: {cafe:5, agua:9, espuma:2}
 
 
 niveles de contenedores: {granos:100, cafe:100, leche:100, espuma:100}
-preparando orden: {cafe:8, agua:1, espuma:9}se termino de recojer ingredientes
-
-niveles de contenedores: {granos:100, cafe:80, leche:100, espuma:80}
-preparando orden: {cafe:6, agua:1, espuma:6}
-se termino de recojer ingredientesniveles de contenedores: {granos:100, cafe:75, leche:100, espuma:78}
-
-se termino de recojer ingredientes
-preparando orden: {cafe:4, agua:5, espuma:10}niveles de contenedores: {granos:100, cafe:69, leche:100, espuma:72}preparando orden: {cafe:1, agua:3, espuma:6}
+preparando orden: {cafe:8, agua:9, espuma:8}
+preparando orden: {cafe:6, agua:1, espuma:6}preparando orden: {cafe:2, agua:9, espuma:2}se termino de recojer ingredientes
 
 
+preparando orden: {cafe:1, agua:3, espuma:6}
 preparando orden: {cafe:10, agua:2, espuma:7}
-niveles de contenedores: {granos:100, cafe:61, leche:100, espuma:64}preparando orden: {cafe:8, agua:5, espuma:7}se termino de recojer ingredientes
-
-
-niveles de contenedores: {granos:100, cafe:60, leche:100, espuma:58}
-se termino de recojer ingredientesse termino de recojer ingredientes
-
-niveles de contenedores: {granos:100, cafe:52, leche:100, espuma:51}
+preparando orden: {cafe:4, agua:5, espuma:10}
+niveles de contenedores: {granos:100, cafe:80, leche:100, espuma:80}
 se termino de recojer ingredientes
-preparando orden: {cafe:2, agua:9, espuma:2}
-niveles de contenedores: {granos:100, cafe:44, leche:100, espuma:42}
+preparando orden: {cafe:8, agua:1, espuma:9}
+niveles de contenedores: {granos:100, cafe:75, leche:100, espuma:78}
+preparando orden: {cafe:8, agua:5, espuma:7}se termino de recojer ingredientes
+
+niveles de contenedores: {granos:100, cafe:67, leche:100, espuma:69}
 se termino de recojer ingredientes
-niveles de contenedores: {granos:100, cafe:40, leche:100, espuma:32}
+niveles de contenedores: {granos:100, cafe:59, leche:100, espuma:61}
 se termino de recojer ingredientes
-niveles de contenedores: {granos:100, cafe:30, leche:100, espuma:25}
+niveles de contenedores: {granos:100, cafe:53, leche:100, espuma:55}
+se termino de recojer ingredientes
+niveles de contenedores: {granos:100, cafe:51, leche:100, espuma:53}
+se termino de recojer ingredientes
+niveles de contenedores: {granos:100, cafe:50, leche:100, espuma:47}
+se termino de recojer ingredientes
+niveles de contenedores: {granos:100, cafe:40, leche:100, espuma:40}
+se termino de recojer ingredientes
+niveles de contenedores: {granos:100, cafe:36, leche:100, espuma:30}
 se termino de recojer ingredientes
 alertando
 fin de consumidor
@@ -44,3 +44,13 @@ fin de consumidor
 Recargando cafe
 Apagando recargador
 stats: {granos usados:0, cafe usado:72, leche usada:0, espuma usada:77, agua usada:54, cafe tomado:10}
+fin de la recarga
+capacidad de ganos de cafe por debajo del 91%
+fin de la recarga
+capacidad de leche fria por debajo del 91%
+fin de la recarga
+fin de la recarga
+capacidad de leche fria por debajo del 91%capacidad de ganos de cafe por debajo del 91%
+
+fin de la recarga
+fin de la recarga

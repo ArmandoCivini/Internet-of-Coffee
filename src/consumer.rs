@@ -269,3 +269,52 @@ mod tests {
         test_grab_ingridients(0, 10, 10, 10, 0, 0, 10, 0);
     }
 }
+
+#[cfg(test)]
+#[cfg(loom)]
+mod tests {
+    use crate::{
+        consumer::{grab_ingridients, register_order},
+        sync::{thread, Arc, Condvar, Mutex, RwLock},
+        types::order_format::OrderFormat,
+        Ingridients, Stats,
+    };
+
+    #[test]
+    fn test_register_order() {
+        loom::model(|| {
+            let stats = Stats {
+                g_consumed: 0,
+                c_consumed: 0,
+                l_consumed: 0,
+                e_consumed: 0,
+                water_consumed: 0,
+                coffee_consumed: 0,
+            };
+            let stats_ref = Arc::new(RwLock::new(stats));
+
+            let stats_lock = stats_ref.clone();
+
+            let register_thread = thread::spawn(move || {
+                let order = OrderFormat {
+                    coffee: 15,
+                    hot_water: 7,
+                    foam: 4,
+                };
+                register_order(&order, &stats_lock);
+            });
+
+            register_thread
+                .join()
+                .expect("no se pudo joinear el thread register");
+
+            let stats_mut = stats_ref.read().expect("no se pudo leer stats");
+            assert_eq!(15, stats_mut.c_consumed);
+            assert_eq!(7, stats_mut.water_consumed);
+            assert_eq!(4, stats_mut.e_consumed);
+            assert_eq!(1, stats_mut.coffee_consumed);
+            assert_eq!(0, stats_mut.g_consumed);
+            assert_eq!(0, stats_mut.l_consumed);
+        });
+    }
+}
