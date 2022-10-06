@@ -28,10 +28,10 @@ mod sync {
     pub(crate) use std::sync::{Arc, Condvar, Mutex, RwLock};
 
     #[cfg(loom)]
-    pub(crate) use loom::sync::{Arc, RwLock};
+    pub(crate) use loom::sync::{Arc, Mutex, RwLock};
 
     #[cfg(loom)]
-    pub(crate) use std::sync::{Condvar, Mutex};
+    pub(crate) use std::sync::Condvar;
 
     #[cfg(not(loom))]
     pub(crate) use std::thread;
@@ -140,6 +140,7 @@ fn ioc_start(orders_file: &str) {
         .expect("no se pudo joinear la thread de estadisticas");
 }
 
+#[cfg(not(loom))]
 #[cfg(test)]
 //Test integral
 mod tests {

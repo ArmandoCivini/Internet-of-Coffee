@@ -15,6 +15,7 @@ fn ingridient_sleep(ingridient: i32) {
 ///Espera hasta que haya ingredientes para tomar.
 /// Toma los ingredientes que nesecita si hay suficiente,
 /// sino toma todo lo que haya.
+#[cfg(not(loom))]
 fn grab_ingridients(
     lock: &Mutex<Ingridients>,
     cvar: &Condvar,
@@ -55,6 +56,14 @@ fn grab_ingridients(
     cvar.notify_all();
 }
 
+#[cfg(loom)]
+fn grab_ingridients(
+    _lock: &Mutex<Ingridients>,
+    _cvar: &Condvar,
+    _coffee_missing: &mut i32,
+    _milk_missing: &mut i32,
+) {
+}
 ///Itera hasta conseguir todos los ingredientes necesarios para la orden.
 /// Luego espera el tiempo de preparacion de la orden.
 fn dispenser(order: &OrderFormat, ingridients_pair: &Arc<(Mutex<Ingridients>, Condvar)>) {
@@ -142,6 +151,7 @@ pub fn consumer(
 }
 
 #[cfg(test)]
+#[cfg(not(loom))]
 mod tests {
     use crate::{
         consumer::{grab_ingridients, register_order},
