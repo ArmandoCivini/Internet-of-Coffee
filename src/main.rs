@@ -55,6 +55,8 @@ fn main() {
 }
 
 #[allow(clippy::needless_collect)]
+///Comienza la ejecución del programa.
+/// Recibe como parametro el archivo con las ordenes.
 fn ioc_start(orders_file: &str) {
     let dispensers_number = 10;
     let orders_buffer_size = 20;

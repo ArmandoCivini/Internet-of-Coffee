@@ -1,5 +1,9 @@
 # Internet of Coffee
 
+## Introducción
+
+Internet of Coffee es un programa que apunta a optimizar la preparación de café en una cafetera con multiples dispensers, para minimizar el tiempo de espera de los clientes haciendo uso de la concurrencia y el modelo de estado mutable compartido.
+
 ## Formato de ordenes
 
 Las ordenes se reciben a travez de un csv en donde cada fila es una orden de un cafe. Cada fila tiene 3 valores; el primero la cantidad de cafe de la orden, el segundo la cantidad de agua caliente y el tercero la cantidad de espuma.
@@ -26,6 +30,40 @@ El programa tiene una thread dedicada a la recarga de ingredientes. Esto se hace
 
 Después se invoca la función *reload* la cual se toma un tiempo para recargar el ingrediente faltante y toma la estructura y la recarga. Es importante remarcar que solo se recarga un ingrediente a la vez. Para la recarga se usan 10 unidades del producto crudo(granos de café, leche fría) para recargar 100 unidades del producto refinado(café molido, espuma de leche). De acabarse algun producto crudo, se recargan 100 unidades de éste automaticamente.
 
-## 
+## Estadísticas
 
+Este software emite estadisticas sobre los ingredientes y cafés consumidos hasta el momento, cada cierto tiempo. Cada función que consume estos se encarga de actualizar las estadisticas en la estructura designada.
+
+## Uso
+
+### Ejecución
+
+El codigo se puede ejecutar con el siguiente commando.
+
+``` 
+cargo run
+```
+
+### Tests
+
+Los tests se corren de la siguiente manera.
+
+``` 
+cargo run
+```
+
+### Tests de concurrencia
+
+Los tests de concurrencia se pueden correr de la siguiente manera.
+
+``` 
 RUSTFLAGS="--cfg loom" cargo test --release
+```
+
+### Documentación
+
+Leé la documentación de las funciones ejecutando el comando.
+
+``` 
+cargo doc --open
+``` 
