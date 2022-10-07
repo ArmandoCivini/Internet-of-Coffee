@@ -317,4 +317,48 @@ mod tests {
             assert_eq!(0, stats_mut.l_consumed);
         });
     }
+
+    #[test]
+    fn test_register_order_mul_threads() {
+        loom::model(|| {
+            let stats = Stats {
+                g_consumed: 0,
+                c_consumed: 0,
+                l_consumed: 0,
+                e_consumed: 0,
+                water_consumed: 0,
+                coffee_consumed: 0,
+            };
+            let stats_ref = Arc::new(RwLock::new(stats));
+
+            let num_threads = 3;
+
+            let registers_threads: Vec<_> = (0..num_threads)
+                .map(|_| {
+                    let stats_clone = stats_ref.clone();
+                    thread::spawn(move || {
+                        let order = OrderFormat {
+                            coffee: 15,
+                            hot_water: 7,
+                            foam: 4,
+                        };
+                        register_order(&order, &stats_clone);
+                    })
+                })
+                .collect();
+
+            registers_threads
+                .into_iter()
+                .flat_map(|x| x.join())
+                .for_each(drop);
+
+            let stats_mut = stats_ref.read().expect("no se pudo leer stats");
+            assert_eq!(15 * num_threads, stats_mut.c_consumed);
+            assert_eq!(7 * num_threads, stats_mut.water_consumed);
+            assert_eq!(4 * num_threads, stats_mut.e_consumed);
+            assert_eq!(1 * num_threads, stats_mut.coffee_consumed);
+            assert_eq!(0, stats_mut.g_consumed);
+            assert_eq!(0, stats_mut.l_consumed);
+        });
+    }
 }
